@@ -524,6 +524,13 @@ export class OfficeState {
     if (directoryName) {
       ch.directoryName = directoryName;
     }
+    // With a break room, an agent starts idle: nothing tells the page an agent that has
+    // not run a turn yet is idle (the server only reports waiting/active), and it would
+    // otherwise sit "typing" at its desk. Its first tool call / active status flips it.
+    if (this.getLoungeSeatIds().length > 0) {
+      ch.isActive = false;
+      ch.seatTimer = 0;
+    }
     if (!skipSpawnEffect) {
       startMatrixEffect(ch, 'spawn');
     }

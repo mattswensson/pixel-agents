@@ -83,6 +83,27 @@ test('an idle agent walks to a break-room seat and sits; work sends it back to i
   assert.equal(ch.loungeSeatId ?? null, null);
 });
 
+test('a brand-new agent starts idle and goes to the break room without any status message', () => {
+  const os = office();
+  os.addAgent(1, undefined, undefined, 'desk-a', true);
+  const ch = os.getCharacters().find((c) => c.id === 1)!;
+  assert.equal(ch.isActive, false);
+  run(os, 60);
+  assert.ok(ch.loungeSeatId, 'sitting in the break room');
+  os.setAgentActive(1, true); // first tool call
+  run(os, 60);
+  const desk = os.seats.get('desk-a')!;
+  assert.deepEqual([ch.tileCol, ch.tileRow], [desk.seatCol, desk.seatRow]);
+});
+
+test('without a break room a new agent still starts working at its desk', () => {
+  const os = office();
+  os.setAreaMappings({});
+  os.getLayout().areaTiles = undefined; // no break-room Area
+  os.addAgent(1, undefined, undefined, 'desk-a', true);
+  assert.equal(os.getCharacters().find((c) => c.id === 1)!.isActive, true);
+});
+
 test('an agent that starts idle at its desk does not wait out the 2-4 minute rest', () => {
   const os = office();
   os.addAgent(1, undefined, undefined, 'desk-a', true);
