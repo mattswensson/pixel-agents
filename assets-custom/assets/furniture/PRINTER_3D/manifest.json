@@ -1,0 +1,60 @@
+{
+  "id": "PRINTER_3D",
+  "name": "3D Printer",
+  "category": "electronics",
+  "type": "group",
+  "groupType": "state",
+  "orientation": "front",
+  "canPlaceOnWalls": false,
+  "canPlaceOnSurfaces": true,
+  "backgroundTiles": 0,
+  "members": [
+    {
+      "type": "group",
+      "groupType": "animation",
+      "state": "on",
+      "members": [
+        {
+          "type": "asset",
+          "id": "PRINTER_3D_ON_1",
+          "file": "PRINTER_3D_ON_1.png",
+          "width": 16,
+          "height": 16,
+          "footprintW": 1,
+          "footprintH": 1,
+          "frame": 0
+        },
+        {
+          "type": "asset",
+          "id": "PRINTER_3D_ON_2",
+          "file": "PRINTER_3D_ON_2.png",
+          "width": 16,
+          "height": 16,
+          "footprintW": 1,
+          "footprintH": 1,
+          "frame": 1
+        },
+        {
+          "type": "asset",
+          "id": "PRINTER_3D_ON_3",
+          "file": "PRINTER_3D_ON_3.png",
+          "width": 16,
+          "height": 16,
+          "footprintW": 1,
+          "footprintH": 1,
+          "frame": 2
+        }
+      ]
+    },
+    {
+      "type": "asset",
+      "id": "PRINTER_3D_OFF",
+      "file": "PRINTER_3D_OFF.png",
+      "width": 16,
+      "height": 16,
+      "footprintW": 1,
+      "footprintH": 1,
+      "state": "off"
+    }
+  ]
+}

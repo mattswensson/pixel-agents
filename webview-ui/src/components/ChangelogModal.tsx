@@ -48,9 +48,9 @@ export function ChangelogModal({ isOpen, onClose, currentVersion }: ChangelogMod
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={<span className="text-4xl">What's New in v{entry.version}</span>}
+      title={<span className="text-2xl sm:text-4xl">What's New in v{entry.version}</span>}
       zIndex={51}
-      className="min-w-sm!"
+      className="min-w-[min(24rem,calc(100vw-16px))]!"
     >
       {/* Body */}
       <div className="py-4 px-10 max-h-[60vh] overflow-y-auto">

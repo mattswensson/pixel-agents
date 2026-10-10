@@ -1,0 +1,60 @@
+{
+  "id": "TV_CONSOLE",
+  "name": "TV & Console",
+  "category": "electronics",
+  "type": "group",
+  "groupType": "state",
+  "orientation": "front",
+  "canPlaceOnWalls": false,
+  "canPlaceOnSurfaces": false,
+  "backgroundTiles": 1,
+  "members": [
+    {
+      "type": "group",
+      "groupType": "animation",
+      "state": "on",
+      "members": [
+        {
+          "type": "asset",
+          "id": "TV_CONSOLE_ON_1",
+          "file": "TV_CONSOLE_ON_1.png",
+          "width": 32,
+          "height": 32,
+          "footprintW": 2,
+          "footprintH": 2,
+          "frame": 0
+        },
+        {
+          "type": "asset",
+          "id": "TV_CONSOLE_ON_2",
+          "file": "TV_CONSOLE_ON_2.png",
+          "width": 32,
+          "height": 32,
+          "footprintW": 2,
+          "footprintH": 2,
+          "frame": 1
+        },
+        {
+          "type": "asset",
+          "id": "TV_CONSOLE_ON_3",
+          "file": "TV_CONSOLE_ON_3.png",
+          "width": 32,
+          "height": 32,
+          "footprintW": 2,
+          "footprintH": 2,
+          "frame": 2
+        }
+      ]
+    },
+    {
+      "type": "asset",
+      "id": "TV_CONSOLE_OFF",
+      "file": "TV_CONSOLE_OFF.png",
+      "width": 32,
+      "height": 32,
+      "footprintW": 2,
+      "footprintH": 2,
+      "state": "off"
+    }
+  ]
+}

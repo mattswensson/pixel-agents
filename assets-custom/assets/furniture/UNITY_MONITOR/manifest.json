@@ -1,0 +1,34 @@
+{
+  "id": "UNITY_MONITOR",
+  "name": "Unity Monitor",
+  "category": "electronics",
+  "type": "group",
+  "groupType": "state",
+  "orientation": "front",
+  "canPlaceOnWalls": false,
+  "canPlaceOnSurfaces": true,
+  "backgroundTiles": 1,
+  "members": [
+    {
+      "type": "asset",
+      "id": "UNITY_MONITOR_ON_1",
+      "file": "UNITY_MONITOR_ON_1.png",
+      "width": 16,
+      "height": 32,
+      "footprintW": 1,
+      "footprintH": 2,
+      "frame": 0,
+      "state": "on"
+    },
+    {
+      "type": "asset",
+      "id": "UNITY_MONITOR_OFF",
+      "file": "UNITY_MONITOR_OFF.png",
+      "width": 16,
+      "height": 32,
+      "footprintW": 1,
+      "footprintH": 2,
+      "state": "off"
+    }
+  ]
+}

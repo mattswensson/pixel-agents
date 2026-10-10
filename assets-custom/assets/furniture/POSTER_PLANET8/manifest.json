@@ -1,0 +1,14 @@
+{
+  "id": "POSTER_PLANET8",
+  "name": "Planet 8 Poster",
+  "category": "wall",
+  "type": "asset",
+  "file": "POSTER_PLANET8.png",
+  "width": 16,
+  "height": 32,
+  "footprintW": 1,
+  "footprintH": 2,
+  "canPlaceOnWalls": true,
+  "canPlaceOnSurfaces": false,
+  "backgroundTiles": 0
+}
