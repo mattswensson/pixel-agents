@@ -56,6 +56,20 @@ export interface Seat {
   assigned: boolean;
 }
 
+/** A tile in front of an arcade cabinet where an idle agent can stand and play. */
+export interface ArcadeSpot {
+  /** `col,row` of the standing tile */
+  key: string;
+  col: number;
+  row: number;
+}
+
+/** What an idle agent can do for fun: free arcade spots and which are taken. */
+export interface ArcadeOptions {
+  spots: readonly ArcadeSpot[];
+  claims: Set<string>;
+}
+
 export interface FurnitureInstance {
   sprite: SpriteData;
   /** Pixel x (top-left) */
@@ -204,6 +218,10 @@ export interface Character {
   seatId: string | null;
   /** Break-room seat an idle agent has claimed (its `assigned` flag is set), or null/undefined. */
   loungeSeatId?: string | null;
+  /** `col,row` key of the arcade spot an idle agent has claimed, or null/undefined. */
+  playSpotKey?: string | null;
+  /** Seconds left at the cabinet before the agent moves on. */
+  playTimer?: number;
   /** Active speech bubble type, or null if none showing */
   bubbleType: 'permission' | 'waiting' | null;
   /** Only meaningful while bubbleType === 'waiting': true when the agent went

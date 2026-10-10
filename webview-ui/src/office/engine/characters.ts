@@ -1,4 +1,7 @@
 import {
+  ARCADE_PLAY_CHANCE,
+  ARCADE_PLAY_MAX_SEC,
+  ARCADE_PLAY_MIN_SEC,
   DEFAULT_MAX_CONTEXT_TOKENS,
   SEAT_REST_MAX_SEC,
   SEAT_REST_MIN_SEC,
@@ -13,7 +16,13 @@ import {
 import { findPath } from '../layout/tileMap.js';
 import type { CharacterSprites } from '../sprites/spriteData.js';
 import { isReadingToolName } from '../toolUtils.js';
-import type { Character, Seat, SpriteData, TileType as TileTypeVal } from '../types.js';
+import type {
+  ArcadeOptions,
+  Character,
+  Seat,
+  SpriteData,
+  TileType as TileTypeVal,
+} from '../types.js';
 import { CharacterState, Direction, TILE_SIZE } from '../types.js';
 
 /** Whether a tool should show the reading animation (vs typing). Taxonomy comes
@@ -89,6 +98,64 @@ export function createCharacter(
   };
 }
 
+const NO_ARCADE: ArcadeOptions = { spots: [], claims: new Set() };
+
+/** Give back the arcade spot a character holds, if any. */
+function releasePlay(ch: Character, arcade: ArcadeOptions): void {
+  if (ch.playSpotKey) arcade.claims.delete(ch.playSpotKey);
+  ch.playSpotKey = null;
+  ch.playTimer = 0;
+}
+
+function atPlay(ch: Character): boolean {
+  return !!ch.playSpotKey && ch.playSpotKey === `${ch.tileCol},${ch.tileRow}`;
+}
+
+/**
+ * Walk to a free arcade cabinet and play. Returns true when walking to, or already
+ * standing at, a spot; false when none is free or reachable.
+ */
+function goToArcade(
+  ch: Character,
+  arcade: ArcadeOptions,
+  tileMap: TileTypeVal[][],
+  blockedTiles: Set<string>,
+): boolean {
+  if (ch.isSubagent || arcade.spots.length === 0) return false;
+  let spot = ch.playSpotKey ? arcade.spots.find((s) => s.key === ch.playSpotKey) : undefined;
+  if (!spot) {
+    const free = arcade.spots.filter((s) => !arcade.claims.has(s.key) && !blockedTiles.has(s.key));
+    if (free.length === 0) return false;
+    spot = free[Math.floor(Math.random() * free.length)];
+    arcade.claims.add(spot.key);
+    ch.playSpotKey = spot.key;
+  }
+  const path = findPath(ch.tileCol, ch.tileRow, spot.col, spot.row, tileMap, blockedTiles);
+  if (path.length > 0) {
+    ch.path = path;
+    ch.moveProgress = 0;
+    ch.state = CharacterState.WALK;
+  } else if (atPlay(ch)) {
+    startPlaying(ch);
+  } else {
+    releasePlay(ch, arcade); // unreachable: give the cabinet back
+    return false;
+  }
+  ch.frame = 0;
+  ch.frameTimer = 0;
+  return true;
+}
+
+/** Stand at the cabinet, facing it, for a while. */
+function startPlaying(ch: Character): void {
+  ch.state = CharacterState.IDLE;
+  ch.dir = Direction.UP;
+  ch.playTimer = randomRange(ARCADE_PLAY_MIN_SEC, ARCADE_PLAY_MAX_SEC);
+  ch.wanderTimer = ch.playTimer;
+  ch.frame = 0;
+  ch.frameTimer = 0;
+}
+
 /** Free the break-room seat a character holds, if any. */
 function releaseLounge(ch: Character, seats: Map<string, Seat>): void {
   if (!ch.loungeSeatId) return;
@@ -159,6 +226,7 @@ export function updateCharacter(
   tileMap: TileTypeVal[][],
   blockedTiles: Set<string>,
   loungeSeatIds: readonly string[] = [],
+  arcade: ArcadeOptions = NO_ARCADE,
 ): void {
   ch.frameTimer += dt;
 
@@ -203,6 +271,7 @@ export function updateCharacter(
       // If became active, pathfind to seat
       if (ch.isActive) {
         releaseLounge(ch, seats);
+        releasePlay(ch, arcade);
         if (!ch.seatId) {
           // No seat assigned — type in place
           ch.state = CharacterState.TYPE;
@@ -239,9 +308,17 @@ export function updateCharacter(
       // Countdown wander timer
       ch.wanderTimer -= dt;
       if (ch.wanderTimer <= 0) {
-        // Idle: head for a break-room seat when one is free
-        if (goToLounge(ch, seats, loungeSeatIds, tileMap, blockedTiles)) {
-          ch.wanderTimer = randomRange(WANDER_PAUSE_MIN_SEC, WANDER_PAUSE_MAX_SEC);
+        // Done playing: give the cabinet back and prefer a seat for a change
+        const wasPlaying = atPlay(ch);
+        if (wasPlaying) releasePlay(ch, arcade);
+        // Idle: play an arcade machine or take a break-room seat, whichever is free
+        const preferArcade = !wasPlaying && Math.random() < ARCADE_PLAY_CHANCE;
+        const rested =
+          (preferArcade && goToArcade(ch, arcade, tileMap, blockedTiles)) ||
+          goToLounge(ch, seats, loungeSeatIds, tileMap, blockedTiles) ||
+          (!preferArcade && !wasPlaying && goToArcade(ch, arcade, tileMap, blockedTiles));
+        if (rested) {
+          if (!atPlay(ch)) ch.wanderTimer = randomRange(WANDER_PAUSE_MIN_SEC, WANDER_PAUSE_MAX_SEC);
           break;
         }
         // Check if we've wandered enough — return to seat for a rest
@@ -316,6 +393,9 @@ export function updateCharacter(
               ch.state = CharacterState.IDLE;
             }
           }
+        } else if (atPlay(ch)) {
+          // Arrived at an arcade cabinet: stand and play
+          startPlaying(ch);
         } else if (atLounge(ch, seats)) {
           // Arrived at the break-room seat: sit and stay until there is work again
           const lounge = seats.get(ch.loungeSeatId!)!;
@@ -377,7 +457,10 @@ export function updateCharacter(
       }
 
       // If became active while wandering, repath to seat
-      if (ch.isActive) releaseLounge(ch, seats);
+      if (ch.isActive) {
+        releaseLounge(ch, seats);
+        releasePlay(ch, arcade);
+      }
       if (ch.isActive && ch.seatId) {
         const seat = seats.get(ch.seatId);
         if (seat) {

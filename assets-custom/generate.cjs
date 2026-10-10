@@ -666,4 +666,315 @@ stateful('XTOOL_LASER', 'xTool Laser', 'electronics', 32, 16, xtool(null), [0, 1
   simple('FILAMENT_RACK', 'Filament Rack', 'storage', c, { bg: 1 });
 }
 
+// ── THEMED ARCADE CABINETS (16x32 each) ──────────────────────
+// Original little pixel-art homages: cabinet colours + a tiny animated screen.
+const CAB_SX = 3;
+const CAB_SY = 7;
+function cabinet(theme, frame) {
+  const c = new C(16, 32);
+  c.rect(1, 0, 14, 32, theme.body);
+  c.rect(1, 0, 1, 32, theme.bodyD);
+  c.rect(14, 0, 1, 32, theme.bodyD);
+  if (theme.stripes) theme.stripes(c);
+  c.rect(1, 0, 14, 1, K.ink);
+  c.rect(2, 1, 12, 4, theme.marquee);
+  theme.marqueeArt(c);
+  c.rect(2, 5, 12, 1, theme.bodyD);
+  c.rect(2, 6, 12, 14, K.ink);
+  if (frame === null) {
+    c.rect(CAB_SX, CAB_SY, 10, 12, '#14131f');
+    c.line(CAB_SX + 1, CAB_SY + 1, CAB_SX + 3, CAB_SY + 1, '#2a2840');
+    c.line(CAB_SX + 1, CAB_SY + 2, CAB_SX + 1, CAB_SY + 3, '#2a2840');
+  } else {
+    c.rect(CAB_SX, CAB_SY, 10, 12, '#05050f');
+    theme.screen(c, frame, CAB_SX, CAB_SY);
+  }
+  c.rect(1, 20, 14, 5, theme.panel);
+  c.rect(1, 20, 14, 1, K.ink);
+  theme.controls(c);
+  c.rect(6, 27, 4, 3, K.ink);
+  c.px(7, 28, K.yellow);
+  c.px(8, 28, K.yellow);
+  c.rect(1, 31, 14, 1, K.ink);
+  return c;
+}
+const stick = (c, x, ball) => {
+  c.px(x, 21, ball);
+  c.px(x, 22, K.ink);
+  c.px(x, 23, K.dark);
+};
+const btn = (c, xs, cols) => xs.forEach((x, i) => c.px(x, 22, cols[i % cols.length]));
+// a 3x3 chomper: mouth faces right when open
+function chomper(c, x, y, body, open) {
+  for (const [dx, dy] of [[1, 0], [0, 1], [1, 1], [2, 1], [1, 2]]) c.px(x + dx, y + dy, body);
+  c.px(x, y, body);
+  c.px(x + 2, y, open ? null : body);
+  c.px(x, y + 2, body);
+  c.px(x + 2, y + 2, open ? null : body);
+  if (open) c.px(x + 2, y + 1, '#05050f');
+}
+function ghost(c, x, y, col) {
+  c.rect(x, y, 3, 3, col);
+  c.px(x, y + 2, '#05050f');
+  c.px(x + 2, y + 2, '#05050f');
+  c.px(x, y, '#05050f');
+  c.px(x + 2, y, '#05050f');
+  c.px(x + 1, y, col);
+  c.px(x + 1, y + 1, K.white);
+}
+function maze(c, x, y, col) {
+  c.rect(x, y, 10, 1, col);
+  c.rect(x, y + 11, 10, 1, col);
+  c.rect(x, y, 1, 12, col);
+  c.rect(x + 9, y, 1, 12, col);
+  c.rect(x + 2, y + 2, 2, 2, col);
+  c.rect(x + 6, y + 2, 2, 2, col);
+  c.rect(x + 3, y + 7, 4, 1, col);
+  c.rect(x + 2, y + 9, 1, 2, col);
+  c.rect(x + 7, y + 9, 1, 2, col);
+}
+const dots = (c, x, y) => {
+  for (let i = 1; i < 9; i += 2) c.px(x + i, y + 5, '#f0d8b0');
+  for (let i = 1; i < 9; i += 2) c.px(x + i, y + 10 - 1, '#f0d8b0');
+};
+const PACMAN = {
+  id: 'ARCADE_PACMAN',
+  name: 'Pac-Man Arcade',
+  body: K.yellow,
+  bodyD: '#c8962a',
+  marquee: '#14206a',
+  marqueeArt: (c) => {
+    for (const x of [3, 4, 6, 7, 9, 10]) c.px(x, 2, K.yellow);
+    chomper(c, 3, 2, K.yellow, true);
+    c.px(11, 3, K.red);
+    c.px(12, 3, K.cyan);
+  },
+  panel: '#14206a',
+  controls: (c) => {
+    stick(c, 4, K.red);
+    btn(c, [9, 11], [K.yellow]);
+  },
+  screen: (c, f, x, y) => {
+    maze(c, x, y, '#2a3ae0');
+    dots(c, x, y);
+    const px = x + 1 + f * 2;
+    chomper(c, px, y + 4, K.yellow, f !== 1);
+    ghost(c, x + 6 - f, y + 4, K.red);
+  },
+};
+const MSPACMAN = {
+  id: 'ARCADE_MSPACMAN',
+  name: 'Ms. Pac-Man Arcade',
+  body: K.red,
+  bodyD: '#a02a3a',
+  marquee: K.ink,
+  marqueeArt: (c) => {
+    chomper(c, 4, 2, K.yellow, true);
+    c.px(5, 1, K.red); // the bow
+    c.px(4, 1, '#ffb0c0');
+    for (const x of [8, 9, 11, 12]) c.px(x, 3, '#ffb0c0');
+  },
+  panel: K.dark,
+  controls: (c) => {
+    stick(c, 4, K.red);
+    btn(c, [9, 11], [K.red, K.yellow]);
+  },
+  screen: (c, f, x, y) => {
+    maze(c, x, y, '#e07aa0');
+    dots(c, x, y);
+    const px = x + 1 + f * 2;
+    chomper(c, px, y + 4, K.yellow, f !== 1);
+    c.px(px + 1, y + 3, K.red); // bow
+    ghost(c, x + 6 - f, y + 4, K.cyan);
+  },
+};
+const GORF = {
+  id: 'ARCADE_GORF',
+  name: 'Gorf Arcade',
+  body: '#2a2a3a',
+  bodyD: '#14141f',
+  stripes: (c) => {
+    c.rect(2, 22, 1, 8, K.purpleL);
+    c.rect(13, 22, 1, 8, K.purpleL);
+  },
+  marquee: '#3a1a5a',
+  marqueeArt: (c) => {
+    for (const x of [3, 5, 6, 8, 9, 11]) c.px(x, 3, '#f05ad8');
+    c.rect(4, 2, 8, 1, K.purpleL);
+  },
+  panel: K.gray,
+  controls: (c) => {
+    stick(c, 4, K.cyan);
+    btn(c, [9, 11], [K.red]);
+  },
+  screen: (c, f, x, y) => {
+    for (const [sx, sy] of [[1, 9], [8, 4], [6, 8]]) c.px(x + sx, y + sy, '#5a5a8a');
+    const sh = f - 1;
+    for (let i = 0; i < 3; i++) {
+      c.rect(x + 1 + i * 3 + sh, y + 4, 2, 1, '#f05ad8');
+      c.rect(x + 1 + i * 3 - sh, y + 6, 2, 1, K.cyan);
+    }
+    c.rect(x + 3 + sh, y + 1, 4, 1, K.red); // the mothership
+    c.rect(x + 4 - sh, y + 10, 3, 1, K.yellow);
+    c.px(x + 5 - sh, y + 9, K.yellow);
+    c.px(x + 5 - sh, y + 8 - f, K.white);
+  },
+};
+const ROBOTRON = {
+  id: 'ARCADE_ROBOTRON',
+  name: 'Robotron Arcade',
+  body: '#1c1a26',
+  bodyD: '#0a0a14',
+  stripes: (c) => {
+    [K.red, K.orange, K.yellow, K.green, K.cyan].forEach((col, i) => c.rect(2, 22 + i * 2, 12, 1, col));
+  },
+  marquee: K.ink,
+  marqueeArt: (c) => {
+    [K.red, K.orange, K.yellow, K.green, K.cyan, K.purpleL].forEach((col, i) => c.rect(3 + i * 2, 2, 2, 2, col));
+  },
+  panel: '#3a1a1a',
+  controls: (c) => {
+    stick(c, 4, K.red);
+    stick(c, 11, K.red);
+  },
+  screen: (c, f, x, y) => {
+    for (const [gx, gy] of [[1, 2], [7, 1], [8, 6], [2, 8], [5, 9]]) {
+      c.rect(x + gx + ((f + gx) % 2), y + gy, 2, 2, K.red); // grunts
+    }
+    for (const [ex, ey, col] of [[4, 3, K.green], [7, 8, K.cyan], [1, 5, K.yellow]]) c.px(x + ex, y + ey, col);
+    c.rect(x + 4, y + 5, 1, 3, K.white); // the hero
+    c.px(x + 4, y + 4, K.yellow);
+    c.line(x + 5 + f, y + 6, x + 8, y + 6 - f, K.yellow); // shots
+  },
+};
+const DONKEYKONG = {
+  id: 'ARCADE_DONKEYKONG',
+  name: 'Donkey Kong Arcade (Blue)',
+  body: '#2a5ac8',
+  bodyD: '#1c3a8a',
+  marquee: K.ink,
+  marqueeArt: (c) => {
+    c.rect(3, 2, 10, 2, K.red);
+    for (const x of [4, 6, 8, 10]) c.px(x, 2, K.yellow);
+    c.rect(5, 3, 6, 1, '#8a4a1a');
+  },
+  panel: '#1c3a8a',
+  controls: (c) => {
+    stick(c, 4, K.red);
+    btn(c, [11], [K.red]);
+  },
+  screen: (c, f, x, y) => {
+    for (const [gy, off] of [[3, 0], [6, 1], [9, 0]]) {
+      for (let i = 0; i < 10; i++) c.px(x + i, y + gy + ((i + off) >> 3), K.red);
+    }
+    c.rect(x + 7, y + 4, 1, 2, K.cyan); // ladders
+    c.rect(x + 2, y + 7, 1, 2, K.cyan);
+    c.rect(x + 1, y, 3, 3, '#8a4a1a'); // the ape
+    c.px(x + 2, y + 1, K.white);
+    c.rect(x + 3 + f * 2, y + 4, 2, 2, K.orange); // barrel
+    c.rect(x + 1 + f, y + 10, 2, 2, K.red); // jumpman
+    c.px(x + 1 + f, y + 9, K.blue);
+  },
+};
+const ASTEROIDS = {
+  id: 'ARCADE_ASTEROIDS',
+  name: 'Asteroids Arcade',
+  body: '#2e2e3a',
+  bodyD: '#1c1c26',
+  stripes: (c) => {
+    c.rect(2, 26, 12, 1, K.white);
+  },
+  marquee: K.ink,
+  marqueeArt: (c) => {
+    for (const x of [3, 5, 7, 9, 11]) c.rect(x, 3, 1, 1, K.white);
+    c.line(3, 2, 6, 2, K.white);
+    c.line(8, 2, 12, 2, K.white);
+  },
+  panel: K.light,
+  controls: (c) => {
+    btn(c, [3, 5, 9, 11, 13], [K.dark, K.dark, K.red, K.red, K.dark]);
+  },
+  screen: (c, f, x, y) => {
+    const rock = (cx, cy, r) => {
+      const pts = [[0, -r], [r, -1], [r - 1, r], [-1, r], [-r, 1], [-r + 1, -r + 1]];
+      for (let i = 0; i < pts.length; i++) {
+        const a = pts[i], b = pts[(i + 1) % pts.length];
+        c.line(cx + a[0], cy + a[1], cx + b[0], cy + b[1], K.white);
+      }
+    };
+    rock(x + 2 + f, y + 3, 2);
+    rock(x + 8 - f, y + 8, 2);
+    rock(x + 8, y + 2 + f, 1);
+    c.px(x + 4, y + 7, K.white); // ship
+    c.px(x + 3, y + 8, K.white);
+    c.px(x + 5, y + 8, K.white);
+    c.px(x + 4, y + 6 - f, K.white); // bullet
+  },
+};
+const AEROCITY = {
+  id: 'ARCADE_AEROCITY',
+  name: 'Aero City Sit-Down Arcade',
+  body: '#e8e8f0',
+  bodyD: '#9a9ab0',
+  stripes: (c) => {
+    c.rect(2, 26, 12, 2, '#2a5ac8');
+    c.rect(2, 28, 12, 1, K.red);
+  },
+  marquee: '#2a5ac8',
+  marqueeArt: (c) => {
+    c.rect(3, 2, 10, 1, K.white);
+    c.rect(3, 4, 6, 1, K.red);
+    c.px(11, 3, K.yellow);
+  },
+  panel: '#2a5ac8',
+  controls: (c) => {
+    c.rect(7, 21, 2, 3, K.ink); // flight yoke
+    c.rect(5, 21, 6, 1, K.dark);
+    c.px(5, 21, K.red);
+    c.px(10, 21, K.red);
+  },
+  screen: (c, f, x, y) => {
+    c.rect(x, y, 10, 12, '#6ab0f0');
+    c.rect(x, y + 6, 10, 6, '#2a5ac8');
+    for (let i = 0; i < 10; i += 2) c.rect(x + i, y + 8 - ((i * 3 + f) % 3), 2, 4 + ((i * 3 + f) % 3), '#33415e'); // skyline
+    c.px(x + ((2 + f * 3) % 8), y + 2, K.white); // clouds
+    c.px(x + ((6 + f * 3) % 8), y + 4, K.white);
+    c.rect(x + 4, y + 7 - f, 3, 1, K.white); // your plane
+    c.px(x + 5, y + 6 - f, K.white);
+    c.px(x + 5, y + 5 - f, K.yellow); // shot
+  },
+};
+for (const t of [PACMAN, MSPACMAN, GORF, ROBOTRON, DONKEYKONG, ASTEROIDS, AEROCITY]) {
+  stateful(t.id, t.name, 'electronics', 16, 32, cabinet(t, null), [0, 1, 2].map((f) => cabinet(t, f)), { bg: 1 });
+}
+
+// ── ARCADE STOOL (16x16 chair): the seat that goes with the sit-down cabinet ──
+function stool() {
+  const c = new C(16, 16);
+  c.rect(4, 11, 1, 3, K.gray);
+  c.rect(11, 11, 1, 3, K.gray);
+  c.rect(7, 11, 2, 3, K.mid);
+  c.rect(3, 14, 10, 1, K.ink);
+  c.ellipse(7.5, 8, 5.5, 3.6, '#a02a3a');
+  c.ellipse(7.5, 7.4, 4.8, 3, K.red);
+  c.rect(5, 5, 3, 1, '#ffb0c0');
+  return c;
+}
+['FRONT', 'BACK', 'SIDE'].forEach((o) => write('ARCADE_STOOL', `ARCADE_STOOL_${o}`, stool()));
+manifest('ARCADE_STOOL', {
+  name: 'Arcade Stool',
+  category: 'chairs',
+  type: 'group',
+  groupType: 'rotation',
+  rotationScheme: '3-way-mirror',
+  canPlaceOnWalls: false,
+  canPlaceOnSurfaces: false,
+  backgroundTiles: 0,
+  members: [
+    asset('ARCADE_STOOL_FRONT', 'ARCADE_STOOL_FRONT', 16, 16, { orientation: 'front' }),
+    asset('ARCADE_STOOL_BACK', 'ARCADE_STOOL_BACK', 16, 16, { orientation: 'back' }),
+    asset('ARCADE_STOOL_SIDE', 'ARCADE_STOOL_SIDE', 16, 16, { orientation: 'side', mirrorSide: true }),
+  ],
+});
+
 console.log('Generated custom furniture into', OUT_DIR);

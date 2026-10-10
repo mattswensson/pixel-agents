@@ -1,5 +1,6 @@
 import { pickDiversePalette } from '../../../../core/src/paletteUtils.js';
 import {
+  ARCADE_FURNITURE_PREFIX,
   AUTO_ON_FACING_DEPTH,
   AUTO_ON_SIDE_DEPTH,
   BREAK_AREA_LABEL,
@@ -29,6 +30,8 @@ import { findPath, getWalkableTiles, isWalkable } from '../layout/tileMap.js';
 import { getPetCount, getPetName } from '../sprites/petSpriteData.js';
 import { getLoadedCharacterCount } from '../sprites/spriteData.js';
 import type {
+  ArcadeOptions,
+  ArcadeSpot,
   Character,
   FurnitureInstance,
   OfficeLayout,
@@ -38,7 +41,7 @@ import type {
   Seat,
   TileType as TileTypeVal,
 } from '../types.js';
-import { CharacterState, Direction, PetState, TILE_SIZE } from '../types.js';
+import { CharacterState, Direction, PetState, TILE_SIZE, TileType } from '../types.js';
 import { createCharacter, updateCharacter } from './characters.js';
 import { advanceMatrixEffect, startMatrixEffect } from './matrixEffectState.js';
 import { createPet, updatePet } from './petEntity.js';
@@ -172,7 +175,11 @@ export class OfficeState {
     for (const seat of this.seats.values()) {
       seat.assigned = false;
     }
-    for (const ch of this.characters.values()) ch.loungeSeatId = null; // claims died with the seats
+    this.arcadeClaims.clear();
+    for (const ch of this.characters.values()) {
+      ch.loungeSeatId = null; // claims died with the seats
+      ch.playSpotKey = null;
+    }
 
     // First pass: try to keep characters at their existing seats
     for (const ch of this.characters.values()) {
@@ -280,6 +287,28 @@ export class OfficeState {
   private loungeSeatKey(ch: Character): string | null {
     const seat = ch.loungeSeatId ? this.seats.get(ch.loungeSeatId) : undefined;
     return seat ? `${seat.seatCol},${seat.seatRow}` : null;
+  }
+
+  /** Arcade spots claimed by playing agents (shared with the character FSM). */
+  private arcadeClaims = new Set<string>();
+
+  /** Standing tiles in front of each arcade cabinet (electronics furniture whose type starts
+   *  with ARCADE_): where idle agents go to play. Only floor tiles nobody blocks count. */
+  getArcadeSpots(): ArcadeSpot[] {
+    const out: ArcadeSpot[] = [];
+    for (const item of this.layout.furniture) {
+      if (!item.type.startsWith(ARCADE_FURNITURE_PREFIX)) continue;
+      const entry = getCatalogEntry(item.type);
+      if (!entry || entry.category !== 'electronics') continue;
+      const col = item.col;
+      const row = item.row + entry.footprintH;
+      const tile = this.tileMap[row]?.[col];
+      if (tile === undefined || tile === TileType.WALL || tile === TileType.VOID) continue;
+      const key = `${col},${row}`;
+      if (this.blockedTiles.has(key)) continue;
+      out.push({ key, col, row });
+    }
+    return out;
   }
 
   /** Seats inside the break-room Area (BREAK_AREA_LABEL): where idle agents sit. */
@@ -627,6 +656,10 @@ export class OfficeState {
       if (seat) seat.assigned = false;
       ch.loungeSeatId = null;
     }
+    if (ch.playSpotKey) {
+      this.arcadeClaims.delete(ch.playSpotKey);
+      ch.playSpotKey = null;
+    }
     if (this.selectedAgentId === id) this.selectedAgentId = null;
     if (this.cameraFollowId === id) this.cameraFollowId = null;
     // Start despawn animation instead of immediate delete
@@ -905,6 +938,14 @@ export class OfficeState {
       }
     }
 
+    // A cabinet lights up while someone stands at it playing (the tile above their spot)
+    for (const ch of this.characters.values()) {
+      if (ch.playSpotKey && ch.state === CharacterState.IDLE && !ch.isActive) {
+        const [col, row] = ch.playSpotKey.split(',').map(Number);
+        if (ch.tileCol === col && ch.tileRow === row) autoOnTiles.add(`${col},${row - 1}`);
+      }
+    }
+
     if (autoOnTiles.size === 0) {
       this.furniture = layoutToFurnitureInstances(this.layout.furniture);
       return;
@@ -1170,6 +1211,7 @@ export class OfficeState {
     }
 
     const loungeSeatIds = this.getLoungeSeatIds();
+    const arcade: ArcadeOptions = { spots: this.getArcadeSpots(), claims: this.arcadeClaims };
     const toDelete: number[] = [];
     for (const ch of this.characters.values()) {
       const effect = advanceMatrixEffect(ch, dt);
@@ -1188,6 +1230,7 @@ export class OfficeState {
           this.tileMap,
           this.blockedTiles,
           loungeSeatIds,
+          arcade,
         ),
       );
 

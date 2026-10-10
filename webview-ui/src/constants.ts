@@ -14,6 +14,12 @@ export const TYPE_FRAME_DURATION_SEC = 0.3;
 /** Label of the Area whose seats are the break room: idle agents go there to sit, and
  *  new agents are never seated there as their work seat (Areas prefer unzoned seats). */
 export const BREAK_AREA_LABEL = 'Break Room';
+/** Furniture whose group id starts with this is an arcade cabinet idle agents can play. */
+export const ARCADE_FURNITURE_PREFIX = 'ARCADE_';
+/** Chance an idle agent heads for a cabinet rather than a lounge seat. */
+export const ARCADE_PLAY_CHANCE = 0.6;
+export const ARCADE_PLAY_MIN_SEC = 40;
+export const ARCADE_PLAY_MAX_SEC = 120;
 export const WANDER_PAUSE_MIN_SEC = 2.0;
 export const WANDER_PAUSE_MAX_SEC = 20.0;
 export const WANDER_MOVES_BEFORE_REST_MIN = 3;

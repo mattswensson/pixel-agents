@@ -9,7 +9,7 @@
 
 import assert from 'node:assert/strict';
 
-import { test } from 'vitest';
+import { test, vi } from 'vitest';
 
 import { BREAK_AREA_LABEL } from '../src/constants.js';
 import { OfficeState } from '../src/office/engine/officeState.js';
@@ -139,4 +139,92 @@ test('removing a sitting agent frees its lounge seat', () => {
   assert.ok(held);
   os.removeAgent(1);
   assert.equal(os.seats.get(held)!.assigned, false);
+});
+
+// ── Arcade play ──────────────────────────────────────────────────────────────
+
+/** Spots are derived from catalog furniture; unit tests have no catalog, so stub them. */
+function withArcade(os: OfficeState, spots: Array<[number, number]>): void {
+  const list = spots.map(([col, row]) => ({ key: `${col},${row}`, col, row }));
+  (os as unknown as { getArcadeSpots: () => typeof list }).getArcadeSpots = () => list;
+}
+
+/** Same office but with no break-room Area, so an arcade spot is the only thing to do. */
+function arcadeOnlyOffice(spots: Array<[number, number]>): OfficeState {
+  const os = office();
+  os.getLayout().areaTiles = undefined;
+  withArcade(os, spots);
+  return os;
+}
+
+test('an idle agent walks to a free cabinet, stands facing it, and plays', () => {
+  const os = arcadeOnlyOffice([[6, 2]]);
+  os.addAgent(1, undefined, undefined, 'desk-a', true);
+  os.setAgentActive(1, false);
+  const ch = os.getCharacters().find((c) => c.id === 1)!;
+  run(os, 60);
+  assert.deepEqual([ch.tileCol, ch.tileRow], [6, 2], 'standing at the cabinet');
+  assert.equal(ch.state, CharacterState.IDLE);
+  assert.equal(ch.dir, Direction.UP, 'facing the machine');
+  assert.equal(ch.playSpotKey, '6,2');
+});
+
+test('two agents never share a cabinet', () => {
+  const os = arcadeOnlyOffice([[6, 2]]);
+  for (const id of [1, 2]) {
+    os.addAgent(id, undefined, undefined, undefined, true);
+    os.setAgentActive(id, false);
+  }
+  run(os, 60);
+  const players = os.getCharacters().filter((c) => c.playSpotKey);
+  assert.equal(players.length, 1, 'one player, the other waits');
+});
+
+test('work interrupts a game: the agent goes back to its desk and frees the cabinet', () => {
+  const os = arcadeOnlyOffice([[6, 2]]);
+  os.addAgent(1, undefined, undefined, 'desk-a', true);
+  os.setAgentActive(1, false);
+  const ch = os.getCharacters().find((c) => c.id === 1)!;
+  run(os, 60);
+  assert.equal(ch.playSpotKey, '6,2');
+  os.setAgentActive(1, true);
+  run(os, 60);
+  const desk = os.seats.get('desk-a')!;
+  assert.deepEqual([ch.tileCol, ch.tileRow], [desk.seatCol, desk.seatRow]);
+  assert.equal(ch.playSpotKey ?? null, null);
+  // ...and another agent can now use it
+  os.addAgent(2, undefined, undefined, undefined, true);
+  os.setAgentActive(2, false);
+  run(os, 60);
+  assert.equal(os.getCharacters().find((c) => c.id === 2)!.playSpotKey, '6,2');
+});
+
+test('after a game the agent moves on to a lounge seat', () => {
+  const spy = vi.spyOn(Math, 'random').mockReturnValue(0); // prefer the arcade, shortest games
+  try {
+    const os = office();
+    withArcade(os, [[6, 2]]);
+    os.addAgent(1, undefined, undefined, 'desk-a', true);
+    os.setAgentActive(1, false);
+    const ch = os.getCharacters().find((c) => c.id === 1)!;
+    run(os, 30);
+    assert.equal(ch.playSpotKey, '6,2', 'started at the cabinet');
+    run(os, 120); // game lasts ARCADE_PLAY_MIN_SEC, then a seat
+    assert.equal(ch.playSpotKey ?? null, null, 'cabinet released');
+    assert.ok(ch.loungeSeatId, 'sitting in the break room');
+  } finally {
+    spy.mockRestore();
+  }
+});
+
+test('removing a playing agent frees its cabinet', () => {
+  const os = arcadeOnlyOffice([[6, 2]]);
+  os.addAgent(1, undefined, undefined, undefined, true);
+  os.setAgentActive(1, false);
+  run(os, 60);
+  os.removeAgent(1);
+  os.addAgent(2, undefined, undefined, undefined, true);
+  os.setAgentActive(2, false);
+  run(os, 60);
+  assert.equal(os.getCharacters().find((c) => c.id === 2)?.playSpotKey, '6,2');
 });
