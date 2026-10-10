@@ -97,6 +97,11 @@ function releaseLounge(ch: Character, seats: Map<string, Seat>): void {
   ch.loungeSeatId = null;
 }
 
+/** Is there a break-room seat nobody holds? Idle agents skip their rest at the desk when so. */
+function hasFreeLounge(seats: Map<string, Seat>, loungeSeatIds: readonly string[]): boolean {
+  return loungeSeatIds.some((id) => seats.get(id) && !seats.get(id)!.assigned);
+}
+
 function atLounge(ch: Character, seats: Map<string, Seat>): boolean {
   const seat = ch.loungeSeatId ? seats.get(ch.loungeSeatId) : undefined;
   return !!seat && ch.tileCol === seat.seatCol && ch.tileRow === seat.seatRow;
@@ -176,7 +181,7 @@ export function updateCharacter(
       if (!ch.isActive && atLounge(ch, seats)) break;
       // If no longer active, stand up and start wandering (after seatTimer expires)
       if (!ch.isActive) {
-        if (ch.seatTimer > 0) {
+        if (ch.seatTimer > 0 && !hasFreeLounge(seats, loungeSeatIds)) {
           ch.seatTimer -= dt;
           break;
         }

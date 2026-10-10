@@ -83,6 +83,18 @@ test('an idle agent walks to a break-room seat and sits; work sends it back to i
   assert.equal(ch.loungeSeatId ?? null, null);
 });
 
+test('an agent that starts idle at its desk does not wait out the 2-4 minute rest', () => {
+  const os = office();
+  os.addAgent(1, undefined, undefined, 'desk-a', true);
+  const ch = os.getCharacters().find((c) => c.id === 1)!;
+  ch.isActive = false; // freshly launched: seated at the desk, never active
+  ch.state = CharacterState.TYPE;
+  ch.seatTimer = 180;
+  run(os, 60);
+  assert.ok(ch.loungeSeatId, 'went to the break room within a minute');
+  assert.ok(ch.tileCol >= 8);
+});
+
 test('two idle agents take different lounge seats; a third finds none and just wanders', () => {
   const os = office();
   for (const id of [1, 2, 3]) os.addAgent(id, undefined, undefined, undefined, true);
