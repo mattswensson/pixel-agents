@@ -1,10 +1,11 @@
 /** Pure rules shared by the agent card bars — highlight tier and the mobile
  *  bar's drag-to-reorder order (DOM-free, so they run on the Node runner). */
 
-import type { TabStatus } from './AgentCard.js';
+/** A card's status (AgentCard's TabStatus). Declared here so this file stays DOM/JSX-free. */
+export type StatusKey = 'idle' | 'working' | 'attention' | 'disconnected';
 
 /** Tailwind background for each status dot, shared by every agent list. */
-export const STATUS_DOT: Record<TabStatus, string> = {
+export const STATUS_DOT: Record<StatusKey, string> = {
   idle: 'bg-status-success', // green — turn complete, nothing pending
   working: 'bg-accent-bright', // blue — actively running
   attention: 'bg-status-permission', // yellow — needs permission or input
