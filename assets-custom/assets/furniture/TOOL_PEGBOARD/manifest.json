@@ -1,0 +1,14 @@
+{
+  "id": "TOOL_PEGBOARD",
+  "name": "Tool Pegboard",
+  "category": "wall",
+  "type": "asset",
+  "file": "TOOL_PEGBOARD.png",
+  "width": 32,
+  "height": 32,
+  "footprintW": 2,
+  "footprintH": 2,
+  "canPlaceOnWalls": true,
+  "canPlaceOnSurfaces": false,
+  "backgroundTiles": 0
+}

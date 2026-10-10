@@ -1,0 +1,60 @@
+{
+  "id": "XTOOL_LASER",
+  "name": "xTool Laser",
+  "category": "electronics",
+  "type": "group",
+  "groupType": "state",
+  "orientation": "front",
+  "canPlaceOnWalls": false,
+  "canPlaceOnSurfaces": true,
+  "backgroundTiles": 0,
+  "members": [
+    {
+      "type": "group",
+      "groupType": "animation",
+      "state": "on",
+      "members": [
+        {
+          "type": "asset",
+          "id": "XTOOL_LASER_ON_1",
+          "file": "XTOOL_LASER_ON_1.png",
+          "width": 32,
+          "height": 16,
+          "footprintW": 2,
+          "footprintH": 1,
+          "frame": 0
+        },
+        {
+          "type": "asset",
+          "id": "XTOOL_LASER_ON_2",
+          "file": "XTOOL_LASER_ON_2.png",
+          "width": 32,
+          "height": 16,
+          "footprintW": 2,
+          "footprintH": 1,
+          "frame": 1
+        },
+        {
+          "type": "asset",
+          "id": "XTOOL_LASER_ON_3",
+          "file": "XTOOL_LASER_ON_3.png",
+          "width": 32,
+          "height": 16,
+          "footprintW": 2,
+          "footprintH": 1,
+          "frame": 2
+        }
+      ]
+    },
+    {
+      "type": "asset",
+      "id": "XTOOL_LASER_OFF",
+      "file": "XTOOL_LASER_OFF.png",
+      "width": 32,
+      "height": 16,
+      "footprintW": 2,
+      "footprintH": 1,
+      "state": "off"
+    }
+  ]
+}

@@ -572,4 +572,98 @@ stateful('PRINTER_3D', '3D Printer', 'electronics', 16, 16, printer(null), [0, 1
   simple('POSTER_BLENDER', 'Blender Poster', 'wall', c, { walls: true });
 }
 
+// ── xTOOL LASER (32x16, desk item): enclosed desktop laser with an orange lid ──
+function xtool(frame) {
+  const c = new C(32, 16);
+  const lit = frame !== null;
+  c.rect(1, 2, 30, 13, K.ink); // shell
+  c.rect(2, 3, 28, 7, lit ? K.orangeL : '#8a5a3a'); // lid (acrylic)
+  c.rect(2, 3, 28, 1, lit ? K.white : K.woodL);
+  c.rect(3, 4, 26, 5, lit ? K.orange : '#6a3a1a'); // window
+  c.rect(3, 8, 26, 1, K.orangeD); // work bed
+  if (lit) {
+    const hx = 7 + frame * 7; // laser head slides along the gantry
+    c.rect(3, 5, 26, 1, K.gray);
+    c.rect(hx, 5, 3, 2, K.light);
+    c.px(hx + 1, 7, K.white); // beam
+    c.px(hx + 1, 8, K.yellow);
+    c.px(hx - 1, 8, K.orangeL);
+    c.px(hx + 3, 8, K.orangeL);
+  } else {
+    c.rect(3, 5, 26, 1, K.gray);
+    c.rect(8, 5, 3, 2, K.mid);
+  }
+  c.rect(2, 10, 28, 4, K.dark); // front panel
+  c.rect(2, 10, 28, 1, K.gray);
+  c.px(25, 12, lit ? K.green : K.red);
+  c.px(27, 12, K.mid);
+  c.rect(5, 12, 7, 1, K.mid); // "xTool"-ish label bar
+  c.rect(1, 15, 30, 1, K.ink);
+  return c;
+}
+stateful('XTOOL_LASER', 'xTool Laser', 'electronics', 32, 16, xtool(null), [0, 1, 2].map(xtool), {
+  surface: true,
+});
+
+// ── TOOL PEGBOARD (32x32 wall): a wall of maker tools ──
+{
+  const c = new C(32, 32);
+  c.rect(0, 2, 32, 28, K.wood);
+  c.rect(1, 3, 30, 26, '#c8a070');
+  for (let y = 5; y < 28; y += 3) for (let x = 3; x < 30; x += 3) c.px(x, y, '#8a6a40');
+  c.box(0, 2, 32, 28, K.ink);
+  // hammer
+  c.rect(4, 7, 2, 9, K.wood);
+  c.rect(2, 5, 6, 3, K.gray);
+  c.rect(2, 5, 6, 1, K.light);
+  // wrench
+  c.rect(11, 6, 2, 11, K.mid);
+  c.rect(10, 5, 4, 3, K.light);
+  c.rect(11, 5, 2, 1, '#c8a070');
+  // screwdrivers
+  c.rect(17, 11, 2, 5, K.red);
+  c.rect(17, 7, 2, 4, K.mid);
+  c.rect(21, 11, 2, 5, K.blue);
+  c.rect(21, 7, 2, 4, K.mid);
+  // pliers
+  c.rect(26, 6, 1, 6, K.red);
+  c.rect(28, 6, 1, 6, K.red);
+  c.rect(26, 12, 3, 1, K.mid);
+  c.rect(27, 4, 1, 3, K.light);
+  // saw
+  c.rect(3, 20, 12, 3, K.light);
+  for (let x = 3; x < 15; x += 2) c.px(x, 23, K.mid);
+  c.rect(15, 19, 4, 5, K.orange);
+  // safety glasses + hex keys + tape
+  c.rect(21, 19, 3, 3, K.cyan);
+  c.rect(25, 19, 3, 3, K.cyan);
+  c.rect(24, 20, 1, 1, K.ink);
+  c.ellipse(24, 26, 3, 2, K.yellow);
+  c.px(24, 26, '#c8a070');
+  c.line(4, 26, 4, 28, K.blue);
+  c.line(7, 26, 7, 28, K.green);
+  simple('TOOL_PEGBOARD', 'Tool Pegboard', 'wall', c, { walls: true });
+}
+
+// ── FILAMENT RACK (16x32): shelves of 3D-printer spools ──
+{
+  const c = new C(16, 32);
+  c.rect(1, 1, 14, 30, K.wood);
+  c.rect(2, 2, 12, 28, K.ink);
+  const cols = [K.red, K.orange, K.yellow, K.green, K.cyan, K.blue, K.purpleL, K.white, K.mid];
+  for (let shelf = 0; shelf < 3; shelf++) {
+    const y = 3 + shelf * 9;
+    c.rect(2, y + 8, 12, 1, K.woodL);
+    for (let i = 0; i < 3; i++) {
+      const col = cols[(shelf * 3 + i) % cols.length];
+      const x = 3 + i * 4;
+      c.rect(x, y + 1, 3, 7, col);
+      c.rect(x, y + 1, 3, 1, K.white);
+      c.px(x + 1, y + 4, K.ink); // spool hole
+    }
+  }
+  c.rect(1, 31, 14, 1, K.ink);
+  simple('FILAMENT_RACK', 'Filament Rack', 'storage', c, { bg: 1 });
+}
+
 console.log('Generated custom furniture into', OUT_DIR);
