@@ -8,6 +8,7 @@
  * `isDefault` — a host only says what and where.
  */
 
+import * as fs from 'fs';
 import * as path from 'path';
 
 import type { HostDirectoryEntry } from './directories.js';
@@ -28,6 +29,32 @@ export function directoryNameFromCwd(cwd: string | undefined): string | undefine
   const at = cwd.indexOf(marker);
   if (at > 0) return directoryNameFor(cwd.slice(0, at));
   return directoryNameFor(cwd);
+}
+
+const WORKTREE_HASH_MARKER = '--claude-worktrees-';
+
+/** The repo directory a worktree's Claude project folder belongs to, e.g.
+ *  `-Users-me-code-pixel-agents--claude-worktrees-bridge-cse-01E7` -> pixel-agents.
+ *  Claude flattens `/` (and `.`) to `-`, so the repo path is recovered by finding
+ *  the split that exists on disk. Undefined for any other folder, or if the repo
+ *  is gone. */
+export function directoryNameFromWorktreeHash(hash: string): string | undefined {
+  const at = hash.indexOf(WORKTREE_HASH_MARKER);
+  if (at <= 0) return undefined;
+  const tokens = hash.slice(0, at).replace(/^-+/, '').split('-');
+  const walk = (base: string, i: number): string | undefined => {
+    if (i === tokens.length) return base;
+    for (let j = tokens.length; j > i; j--) {
+      const next = path.join(base, tokens.slice(i, j).join('-'));
+      if (fs.existsSync(next)) {
+        const found = walk(next, j);
+        if (found) return found;
+      }
+    }
+    return undefined;
+  };
+  const repo = walk(path.sep, 0);
+  return repo ? directoryNameFor(repo) : undefined;
 }
 
 /** The directory the standalone server was started from. */
