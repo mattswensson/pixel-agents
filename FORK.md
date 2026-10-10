@@ -39,3 +39,14 @@ http://127.0.0.1:8081`, Tailscale-only). Check `tailscale serve status` for the 
 - Office layout, settings and seats live in `~/.pixel-agents/` (not in the repo). Custom sprites
   (Settings → Add Asset Directory, format in `docs/external-assets.md`) can go in `assets-custom/`
   in this repo so they are versioned.
+
+## Custom furniture (`assets-custom/`)
+
+- Game-room and maker-space props (arcade, TV + console, bean bags, Unity/Blender monitors, 3D printer,
+  xTool laser, pegboard, filament rack, posters, ...) are **generated** by `assets-custom/generate.cjs`
+  (`NODE_PATH=<repo>/node_modules node assets-custom/generate.cjs`); edit that script, not the PNGs.
+- The folder is registered in `~/.pixel-agents/config.json` under `externalAssetDirectories`
+  (path `/Users/mswensson/code/pixel-agents/assets-custom`). Restart the live server to load new props.
+- The live layout is `~/.pixel-agents/layout.json`; back it up before editing. Item types are asset ids
+  (e.g. `ARCADE_CABINET_OFF`, `BEAN_BAG_SIDE:left`).
+- Touch: the canvas supports pinch zoom, two-finger pan and one-finger pan (outside edit mode).
