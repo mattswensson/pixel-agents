@@ -14,6 +14,7 @@ import {
   uninstallHooks as installerUninstallHooks,
 } from './claudeHookInstaller.js';
 import { claudeTeamProvider } from './claudeTeamProvider.js';
+import { middleEllipsis, summarizeBashCommand } from './commandSummary.js';
 import { CONSENT_DISCLOSURE, CONSENT_INSTALL_HEADLINE } from './consentCopy.js';
 import {
   CLAUDE_LARGE_CONTEXT_WINDOW,
@@ -22,6 +23,9 @@ import {
   CLAUDE_TERMINAL_NAME_PREFIX,
 } from './constants.js';
 
+/** Longest file name shown in a Read/Edit/Write status before its middle is elided. */
+const FILE_NAME_DISPLAY_MAX_LENGTH = 24;
+
 // ── formatToolStatus: moved from src/transcriptParser.ts ──
 
 export function formatToolStatus(toolName: string, input?: unknown): string {
@@ -29,15 +33,14 @@ export function formatToolStatus(toolName: string, input?: unknown): string {
   const base = (p: unknown) => (typeof p === 'string' ? path.basename(p) : '');
   switch (toolName) {
     case 'Read':
-      return `Reading ${base(inp.file_path)}`;
+      return `Reading ${middleEllipsis(base(inp.file_path), FILE_NAME_DISPLAY_MAX_LENGTH)}`;
     case 'Edit':
-      return `Editing ${base(inp.file_path)}`;
+      return `Editing ${middleEllipsis(base(inp.file_path), FILE_NAME_DISPLAY_MAX_LENGTH)}`;
     case 'Write':
-      return `Writing ${base(inp.file_path)}`;
-    case 'Bash': {
-      const cmd = (inp.command as string) || '';
-      return `Running: ${cmd.length > BASH_COMMAND_DISPLAY_MAX_LENGTH ? cmd.slice(0, BASH_COMMAND_DISPLAY_MAX_LENGTH) + '\u2026' : cmd}`;
-    }
+      return `Writing ${middleEllipsis(base(inp.file_path), FILE_NAME_DISPLAY_MAX_LENGTH)}`;
+    case 'Bash':
+      // What it is doing (`npm run package`), not the raw pipeline — see commandSummary.ts.
+      return summarizeBashCommand((inp.command as string) || '', BASH_COMMAND_DISPLAY_MAX_LENGTH);
     case 'Glob':
       return 'Searching files';
     case 'Grep':

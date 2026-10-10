@@ -17,6 +17,8 @@ interface LaunchDrawerProps {
   /** Open the Directory modal pre-filled with this entry (user-defined rows). */
   onEditDirectory: (directory: Directory) => void;
   className?: string;
+  /** Open downward (the launch button is at the top of the panel). */
+  below?: boolean;
 }
 
 /**
@@ -45,11 +47,12 @@ export function LaunchDrawer({
   onAddDirectory,
   onEditDirectory,
   className = '',
+  below = false,
 }: LaunchDrawerProps) {
   return (
     // Open even with no Directories: `+ Directory` is always worth showing, and
     // an office with an empty list is exactly where it's needed most.
-    <Dropdown isOpen={isOpen} className={`min-w-128 ${className}`}>
+    <Dropdown isOpen={isOpen} below={below} className={`min-w-128 ${className}`}>
       <div data-testid="launch-drawer">
         {/* DropdownItem hard-resets to border-none, so the separator lives on
             this wrapper. */}

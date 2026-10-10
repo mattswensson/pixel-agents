@@ -1,11 +1,13 @@
 import type { ReactNode } from 'react';
 import { useCallback, useRef } from 'react';
 
-import { MobileAgentBar } from '../components/MobileAgentBar.js';
+import type { AgentRowInfo } from '../components/AgentListPanel.js';
+import { AgentListPanel } from '../components/AgentListPanel.js';
 import { MobileKeyBar } from '../components/MobileKeyBar.js';
 import { MobileTerminalPage } from '../components/MobileTerminalPage.js';
 import type { TerminalInputHandle } from '../components/TerminalPane.js';
 import { Button } from '../components/ui/Button.js';
+import { AGENT_PANEL_WIDTH_MOBILE_PX } from '../constants.js';
 import type { Directory } from '../hooks/useExtensionMessages.js';
 import type { TerminalDrawerController } from '../hooks/useTerminalDrawer.js';
 import { TRACK_TRANSITION, trackTransform, useEdgeSwipe } from './useEdgeSwipe.js';
@@ -20,6 +22,8 @@ interface MobileShellProps {
   agentIds: number[];
   terminalAgentIds: number[];
   focusedAgentId: number | null;
+  /** Name + current activity for the list rows. */
+  getRowInfo: (agentId: number) => AgentRowInfo;
   terminalAvailable: boolean;
   terminalUnavailableReason: string | null;
   /** The + card's launch drawer. */
@@ -45,6 +49,7 @@ export function MobileShell({
   agentIds,
   terminalAgentIds,
   focusedAgentId,
+  getRowInfo,
   terminalAvailable,
   terminalUnavailableReason,
   directories,
@@ -76,7 +81,31 @@ export function MobileShell({
   }, []);
 
   return (
-    <>
+    <div className="flex flex-1 min-h-0 min-w-0">
+      <AgentListPanel
+        agentIds={agentIds}
+        focusedAgentId={focusedAgentId}
+        // The accent border marks the showing pane, so it only exists on the
+        // terminal page; the focused character keeps its tint on both.
+        activeAgentId={shell.view === 'terminal' ? drawer.activeAgentId : null}
+        onSelectAgent={shell.selectCard}
+        onCloseAgent={onCloseAgent}
+        getAppearance={drawer.getAppearance}
+        statusFor={drawer.statusFor}
+        getRowInfo={getRowInfo}
+        widthPx={AGENT_PANEL_WIDTH_MOBILE_PX}
+        // The terminal needs the width: collapse to the rail while it shows.
+        forceRail={shell.view === 'terminal'}
+        launch={{
+          onLaunchDirectory: shell.launch,
+          directories,
+          onAddDirectory,
+          onEditDirectory,
+          canLaunch: terminalAvailable,
+          unavailableReason: terminalUnavailableReason,
+        }}
+      />
+      <div className="flex-1 min-w-0 flex flex-col">
       {/* touch-none: drags on the track (canvas margins, safe-area strip,
           terminal padding) must never start an iOS page pan — with the
           keyboard up Safari pans the layout viewport on any vertical drag
@@ -119,29 +148,12 @@ export function MobileShell({
         )}
       </div>
 
-      <MobileAgentBar
-        agentIds={agentIds}
-        focusedAgentId={focusedAgentId}
-        // The accent border marks the showing pane, so it only exists on the
-        // terminal page; the focused character keeps its tint on both.
-        activeAgentId={shell.view === 'terminal' ? drawer.activeAgentId : null}
-        onSelectAgent={shell.selectCard}
-        onCloseAgent={onCloseAgent}
-        onLaunchDirectory={shell.launch}
-        directories={directories}
-        onAddDirectory={onAddDirectory}
-        onEditDirectory={onEditDirectory}
-        canLaunch={terminalAvailable}
-        launchUnavailableReason={terminalUnavailableReason}
-        getAppearance={drawer.getAppearance}
-        statusFor={drawer.statusFor}
-      />
-
       {/* Accessory keys for the TUI, only while the software keyboard is up —
           the last flex child, so it sits directly above the keyboard. */}
       {shell.view === 'terminal' && keyboardOpen && (
         <MobileKeyBar onKey={handleKey} onPaste={handlePaste} />
       )}
-    </>
+      </div>
+    </div>
   );
 }

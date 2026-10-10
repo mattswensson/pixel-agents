@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 
 import { toMajorMinor } from './changelogData.js';
-import { AgentCardBar } from './components/AgentCardBar.js';
+import type { AgentRowInfo } from './components/AgentListPanel.js';
+import { AgentListPanel } from './components/AgentListPanel.js';
 import { BottomToolbar } from './components/BottomToolbar.js';
 import { ChangelogModal } from './components/ChangelogModal.js';
 import { ConnectionIndicator } from './components/ConnectionIndicator.js';
@@ -18,6 +19,7 @@ import { Modal } from './components/ui/Modal.js';
 import { VersionIndicator } from './components/VersionIndicator.js';
 import { ZoomControls } from './components/ZoomControls.js';
 import { OFFICE_CANVAS_TEST_ID } from './constants.js';
+import { AGENT_PANEL_WIDTH_DESKTOP_PX } from './constants.js';
 import { useDirectoryEditor } from './hooks/useDirectoryEditor.js';
 import { useEditorActions } from './hooks/useEditorActions.js';
 import { useEditorKeyboard } from './hooks/useEditorKeyboard.js';
@@ -29,6 +31,7 @@ import { useTerminalDrawer } from './hooks/useTerminalDrawer.js';
 import { useVisualViewportHeight } from './hooks/useVisualViewportHeight.js';
 import { MobileShell } from './mobile/MobileShell.js';
 import { useMobileShell } from './mobile/useMobileShell.js';
+import { getActivityText } from './office/activityText.js';
 import { OfficeCanvas } from './office/components/OfficeCanvas.js';
 import { ToolOverlay } from './office/components/ToolOverlay.js';
 import { EditorState } from './office/editor/editorState.js';
@@ -355,6 +358,25 @@ function App() {
   }, []);
 
   const officeState = getOfficeState();
+
+  // One row of the agent list: who it is and what it is doing. Idle/active and bubbles
+  // live in imperative office state, which the panel re-reads on a timer.
+  const getAgentRowInfo = useCallback(
+    (id: number): AgentRowInfo => {
+      const ch = officeState.characters.get(id);
+      return {
+        name: ch?.directoryName || `Agent ${id}`,
+        activity: getActivityText(
+          id,
+          agentTools,
+          ch?.isActive ?? false,
+          ch?.bubbleType ?? null,
+          ch?.waitingAwaitingInput ?? false,
+        ),
+      };
+    },
+    [officeState, agentTools],
+  );
 
   // Merged set of Directories the Areas dropdown can map: host-contributed ones plus
   // every distinct Directory an agent has run in this session (deduped by name; name
@@ -732,6 +754,7 @@ function App() {
           agentIds={agents}
           terminalAgentIds={terminalAgentIds}
           focusedAgentId={focusedAgentId}
+          getRowInfo={getAgentRowInfo}
           terminalAvailable={terminalAvailable}
           terminalUnavailableReason={terminalUnavailableReason}
           directories={directories}
@@ -742,18 +765,29 @@ function App() {
         />
       ) : (
         <>
+          {!isDebugMode && (
+            <AgentListPanel
+              agentIds={agents}
+              focusedAgentId={focusedAgentId}
+              activeAgentId={terminalAvailable ? terminalDrawer.activeAgentId : null}
+              onSelectAgent={terminalAvailable ? terminalDrawer.select : handleCardSelect}
+              onCloseAgent={handleCloseAgent}
+              getAppearance={terminalDrawer.getAppearance}
+              statusFor={terminalDrawer.statusFor}
+              getRowInfo={getAgentRowInfo}
+              widthPx={AGENT_PANEL_WIDTH_DESKTOP_PX}
+            />
+          )}
           {officeRegion}
 
           {/* Standalone with a terminal: terminalAvailable is only ever true when
               the server reports a working PTY to a tokened session, which VS
               Code's surface never does. In flow as a flex sibling so the office
-              region reflows beside it instead of being overlaid.
-
-              Otherwise (VS Code, or a watch-only standalone session) the card
-              bar stands alone with every agent in the office, external sessions
-              included — the at-a-glance "who needs attention" strip, with a
-              click raising the agent's editor terminal where there is one. */}
-          {terminalAvailable ? (
+              region reflows beside it instead of being overlaid. Everywhere else
+              the agent list on the left is the at-a-glance "who needs attention"
+              view, with a click raising the agent's editor terminal where there
+              is one. */}
+          {terminalAvailable && (
             <TerminalDrawer
               agentIds={terminalAgentIds}
               shownAgentId={terminalDrawer.shownAgentId}
@@ -767,17 +801,6 @@ function App() {
               statusFor={terminalDrawer.statusFor}
               onStatusChange={terminalDrawer.onStatusChange}
             />
-          ) : (
-            !isDebugMode && (
-              <AgentCardBar
-                agentIds={agents}
-                focusedAgentId={focusedAgentId}
-                getAppearance={terminalDrawer.getAppearance}
-                statusFor={terminalDrawer.statusFor}
-                onSelect={handleCardSelect}
-                onClose={handleCloseAgent}
-              />
-            )
           )}
         </>
       )}

@@ -243,6 +243,24 @@ describe('claudeProvider', () => {
         'Reading b.ts',
       );
     });
+    it('formats Bash as what it is doing, not the raw command', () => {
+      expect(
+        claudeProvider.formatToolStatus('Bash', {
+          command: 'cd /Users/me/code/app && npm run package 2>&1 | grep -E "rror|built in"',
+        }),
+      ).toBe('npm run package');
+      expect(claudeProvider.formatToolStatus('Bash', { command: 'git push -u origin main' })).toBe(
+        'git push',
+      );
+    });
+    it('elides the middle of a long file name, keeping the extension', () => {
+      const status = claudeProvider.formatToolStatus('Read', {
+        file_path: '/a/an-extremely-long-component-file-name.tsx',
+      });
+      expect(status.startsWith('Reading ')).toBe(true);
+      expect(status.endsWith('.tsx')).toBe(true);
+      expect(status.length).toBeLessThanOrEqual('Reading '.length + 24);
+    });
     it('formats Task/Agent with description', () => {
       expect(claudeProvider.formatToolStatus('Task', { description: 'Code review' })).toBe(
         'Subtask: Code review',

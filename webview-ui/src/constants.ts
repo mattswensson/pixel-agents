@@ -515,6 +515,16 @@ export const DRAWER_EDIT_LONG_PRESS_MAX_MOVE_PX = 10;
 /** localStorage key for the mobile bar's custom card order (per device — a
  *  presentation preference, deliberately not synced through the server). */
 export const MOBILE_CARD_ORDER_STORAGE_KEY = 'pixel-agents.mobileCardOrder';
+
+// ── Agent list panel (left side) ──
+/** Expanded panel width on a phone / on desktop, and the slim rail it collapses to. */
+export const AGENT_PANEL_WIDTH_MOBILE_PX = 184;
+export const AGENT_PANEL_WIDTH_DESKTOP_PX = 248;
+export const AGENT_PANEL_RAIL_WIDTH_PX = 56;
+/** Per-device preference: 'true' when the panel is collapsed to its rail. */
+export const AGENT_PANEL_COLLAPSED_STORAGE_KEY = 'pixelAgents.agentPanelCollapsed';
+/** The panel re-reads imperative office state (bubbles, idle/active) this often. */
+export const AGENT_PANEL_REFRESH_MS = 500;
 /** Breathing room kept between a card and the scroller edge when the bar
  *  auto-scrolls the focused agent's card into view. */
 export const CARD_SCROLL_INTO_VIEW_MARGIN_PX = 8;

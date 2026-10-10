@@ -1,6 +1,16 @@
 /** Pure rules shared by the agent card bars — highlight tier and the mobile
  *  bar's drag-to-reorder order (DOM-free, so they run on the Node runner). */
 
+import type { TabStatus } from './AgentCard.js';
+
+/** Tailwind background for each status dot, shared by every agent list. */
+export const STATUS_DOT: Record<TabStatus, string> = {
+  idle: 'bg-status-success', // green — turn complete, nothing pending
+  working: 'bg-accent-bright', // blue — actively running
+  attention: 'bg-status-permission', // yellow — needs permission or input
+  disconnected: 'bg-status-error', // red — terminal socket dropped
+};
+
 /** Card highlight tiers: 'focused' = the agent's character is selected in the
  *  office (active background, no border); 'active' = its terminal pane is the
  *  one showing (background + accent border). */

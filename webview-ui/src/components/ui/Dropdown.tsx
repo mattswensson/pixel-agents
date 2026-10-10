@@ -4,13 +4,15 @@ interface DropdownProps {
   isOpen: boolean;
   children: ReactNode;
   className?: string;
+  /** Open downward from the trigger instead of upward (for triggers at the top of the screen). */
+  below?: boolean;
 }
 
-export function Dropdown({ isOpen, children, className = '' }: DropdownProps) {
+export function Dropdown({ isOpen, children, className = '', below = false }: DropdownProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="absolute bottom-full left-0 pb-10 z-10">
+    <div className={`absolute left-0 z-10 ${below ? 'top-full pt-10' : 'bottom-full pb-10'}`}>
       <div
         className={`bg-bg border-2 border-border rounded-none shadow-pixel p-4 max-w-[calc(100vw-20px)] ${className}`}
       >
