@@ -50,3 +50,18 @@ http://127.0.0.1:8081`, Tailscale-only). Check `tailscale serve status` for the 
 - The live layout is `~/.pixel-agents/layout.json`; back it up before editing. Item types are asset ids
   (e.g. `ARCADE_CABINET_OFF`, `BEAN_BAG_SIDE:left`).
 - Touch: the canvas supports pinch zoom, two-finger pan and one-finger pan (outside edit mode).
+
+## Agent list and labels
+
+- **Left-hand agent list** (`webview-ui/src/components/AgentListPanel.tsx`) replaces the bottom card bar on
+  phones and sits beside the office on desktop. It shows each agent's name, status dot and current command
+  (two lines), and collapses to a rail (preference in `localStorage`; the rail is forced on the phone's
+  terminal page). Long-press reordering of the old bottom bar was dropped; `MobileAgentBar.tsx` is now unused.
+- **Over a character** the office shows only `Active` / `Idle` / `Waiting` / `Needs approval`
+  (`office/activityText.ts`); sub-agent labels are unchanged.
+- **Command text** is summarised server-side (`providers/hook/claude/commandSummary.ts`): `npm run package`,
+  not the first 30 characters of the pipeline. Long file names elide in the middle.
+- **Idle behaviour:** agents sit in the break room or play arcade cabinets (`office/engine/characters.ts`);
+  the break room is the Area labelled `Break Room` in the layout.
+- **E2E:** upstream's Playwright specs under `e2e/tests/**` still assert the old overlay text
+  (`Running: npm test`); they have not been run or updated in this fork.
