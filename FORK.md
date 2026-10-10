@@ -23,13 +23,15 @@ http://127.0.0.1:8081`, Tailscale-only). Check `tailscale serve status` for the 
    send it to the owner. Never put the preview on the Cloudflare tunnel.
 2. **Ship** only when the owner says so: merge to `main` and push, then in `~/code/pixel-agents`
    `git pull && npm run package`, then restart the live server:
-   `tmux kill-session -t pixel-agents; tmux new-session -d -s pixel-agents -c "$HOME/code" "node $HOME/code/pixel-agents/dist/cli.js --host 127.0.0.1 --port 8080"`
+   `tmux kill-session -t pixel-agents; ~/bin/claude-rc-start.sh` (the login script starts it again
+   in a restart loop)
    and check `curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/` returns 200.
    Stop the preview (`tmux kill-session -t pixel-preview`).
 
 ## The live server
 
-- Bound to `127.0.0.1:8080` only. The Cloudflare tunnel routes tracker.confusedmatt.com there,
+- Started by `~/bin/claude-rc-start.sh` (login item, reruns every 5 min) in tmux session
+  `pixel-agents`, restarting itself if it exits. Bound to `127.0.0.1:8080` only. The Cloudflare tunnel routes tracker.confusedmatt.com there,
   behind Cloudflare Access (owner's email only). Don't change the tunnel or Access policy.
 - The page includes the embedded Claude terminal (the owner accepted this). Don't widen access to it.
 - The startup URL's `?token=` is a secret (it approves hook installs). Never print it into a commit,
