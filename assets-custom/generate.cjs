@@ -977,4 +977,32 @@ manifest('ARCADE_STOOL', {
   ],
 });
 
+// ── PING-PONG TABLE (48x32, floor item, 3x2 tiles) ───────────
+function pingPong() {
+  const c = new C(48, 32);
+  // legs and a floor shadow under the table
+  c.rect(4, 26, 2, 5, K.gray);
+  c.rect(42, 26, 2, 5, K.gray);
+  c.rect(2, 30, 44, 1, K.ink);
+  // table top: dark-blue slab with a lighter playing surface
+  c.rect(1, 6, 46, 20, K.ink);
+  c.rect(2, 7, 44, 18, '#1f4f95');
+  c.rect(3, 8, 42, 16, K.blue);
+  c.box(3, 8, 42, 16, K.white);
+  c.rect(4, 15, 40, 1, K.white); // centre line (length-wise)
+  // net across the middle, with posts
+  c.rect(23, 5, 2, 21, K.light);
+  c.rect(24, 6, 1, 19, K.white);
+  c.rect(22, 4, 4, 2, K.gray);
+  c.rect(22, 25, 4, 2, K.gray);
+  // paddles and a ball
+  c.ellipse(9, 12, 2, 2, K.red);
+  c.px(9, 14, K.woodL);
+  c.ellipse(38, 19, 2, 2, K.red);
+  c.px(38, 21, K.woodL);
+  c.px(30, 15, K.yellow);
+  return c;
+}
+simple('PING_PONG_TABLE', 'Ping-Pong Table', 'misc', pingPong());
+
 console.log('Generated custom furniture into', OUT_DIR);

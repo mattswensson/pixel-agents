@@ -1,0 +1,14 @@
+{
+  "id": "PING_PONG_TABLE",
+  "name": "Ping-Pong Table",
+  "category": "misc",
+  "type": "asset",
+  "file": "PING_PONG_TABLE.png",
+  "width": 48,
+  "height": 32,
+  "footprintW": 3,
+  "footprintH": 2,
+  "canPlaceOnWalls": false,
+  "canPlaceOnSurfaces": false,
+  "backgroundTiles": 0
+}
