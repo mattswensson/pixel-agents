@@ -44,6 +44,7 @@ import {
 } from './constants.js';
 import { seedContextUsage } from './contextUsage.js';
 import type { DismissalTracker } from './dismissalTracker.js';
+import { directoryNameFromCwd } from './hostDirectory.js';
 import { assignPaletteIfNeeded } from './paletteAssigner.js';
 import { pathsMatch } from './pathKey.js';
 import type { SubagentWatch } from './subagentWatch.js';
@@ -1040,6 +1041,7 @@ export function adoptExternalSessionFromHook(
     const projectDir = path.dirname(transcriptPath);
     const directoryName =
       directoryNameResolver?.({ cwd, projectDir }) ??
+      directoryNameFromCwd(cwd) ??
       directoryNameFromProjectDir(path.basename(projectDir));
 
     adoptExternalSession(
@@ -1070,7 +1072,7 @@ export function adoptExternalSessionFromHook(
     // Hooks-only provider (OpenCode, Copilot): no transcript file, all state from hooks
     const id = nextAgentIdRef.current++;
     const directoryName =
-      directoryNameResolver?.({ cwd }) ?? (cwd ? path.basename(cwd) : undefined);
+      directoryNameResolver?.({ cwd }) ?? directoryNameFromCwd(cwd);
     const agent = createAgentState({
       id,
       sessionId,

@@ -18,6 +18,18 @@ export function directoryNameFor(dirPath: string): string {
   return path.basename(dirPath) || dirPath;
 }
 
+/** Directory name for an agent's working directory. A Claude Code worktree
+ *  (`<repo>/.claude/worktrees/<session>`) belongs to the repo that owns it, so it
+ *  is named after that repo, not after the throwaway worktree folder — Remote
+ *  Control starts one worktree per session, named after the session id. */
+export function directoryNameFromCwd(cwd: string | undefined): string | undefined {
+  if (!cwd) return undefined;
+  const marker = `${path.sep}.claude${path.sep}worktrees${path.sep}`;
+  const at = cwd.indexOf(marker);
+  if (at > 0) return directoryNameFor(cwd.slice(0, at));
+  return directoryNameFor(cwd);
+}
+
 /** The directory the standalone server was started from. */
 export function hostDirectory(): HostDirectoryEntry {
   const cwd = process.cwd();
