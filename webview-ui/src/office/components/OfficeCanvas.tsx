@@ -4,6 +4,7 @@ import {
   CAMERA_FOLLOW_LERP,
   CAMERA_FOLLOW_SNAP_THRESHOLD,
   PAN_MARGIN_FRACTION,
+  TOUCH_TAP_SLOP_PX,
   ZOOM_MAX,
   ZOOM_MIN,
   ZOOM_SCROLL_THRESHOLD,
@@ -867,6 +868,107 @@ export function OfficeCanvas({
     return () => canvas.removeEventListener('wheel', handleWheel);
   }, [handleWheel]);
 
+  // Touch: pinch to zoom (integer steps, like the wheel), two-finger drag to pan,
+  // and one-finger drag to pan outside edit mode. A one-finger tap that never moves
+  // is left alone so the synthesized click still selects characters.
+  const touchLiveRef = useRef({ zoom, onZoomChange, clampPan, isEditMode });
+  touchLiveRef.current = { zoom, onZoomChange, clampPan, isEditMode };
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const dpr = () => window.devicePixelRatio || 1;
+    let mode: 'none' | 'pan' | 'pinch' = 'none';
+    let panning = false; // one-finger drag has passed the tap slop
+    let startX = 0;
+    let startY = 0;
+    let startPan = { x: 0, y: 0 };
+    let startDist = 0;
+    let startZoom = 1;
+    const dist = (t: TouchList) =>
+      Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+    const mid = (t: TouchList) => ({
+      x: (t[0].clientX + t[1].clientX) / 2,
+      y: (t[0].clientY + t[1].clientY) / 2,
+    });
+    const begin = (x: number, y: number) => {
+      startX = x;
+      startY = y;
+      startPan = { ...panRef.current };
+    };
+    const onStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        mode = 'pinch';
+        panning = true;
+        startDist = dist(e.touches);
+        startZoom = touchLiveRef.current.zoom;
+        const m = mid(e.touches);
+        begin(m.x, m.y);
+        officeState.cameraFollowId = null;
+        officeState.cancelGreeterCamera();
+        e.preventDefault();
+      } else if (e.touches.length === 1) {
+        mode = 'pan';
+        panning = false;
+        begin(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    };
+    const onMove = (e: TouchEvent) => {
+      const live = touchLiveRef.current;
+      if (mode === 'pinch' && e.touches.length === 2) {
+        e.preventDefault();
+        if (startDist > 0) {
+          const target = Math.round(startZoom * (dist(e.touches) / startDist));
+          const next = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, target));
+          if (next !== live.zoom) live.onZoomChange(next);
+        }
+        const m = mid(e.touches);
+        panRef.current = live.clampPan(
+          startPan.x + (m.x - startX) * dpr(),
+          startPan.y + (m.y - startY) * dpr(),
+        );
+      } else if (mode === 'pan' && e.touches.length === 1 && !live.isEditMode) {
+        const t = e.touches[0];
+        if (!panning && Math.hypot(t.clientX - startX, t.clientY - startY) < TOUCH_TAP_SLOP_PX)
+          return;
+        if (!panning) {
+          panning = true;
+          begin(t.clientX, t.clientY);
+          officeState.cameraFollowId = null;
+          officeState.cancelGreeterCamera();
+          return;
+        }
+        e.preventDefault();
+        panRef.current = live.clampPan(
+          startPan.x + (t.clientX - startX) * dpr(),
+          startPan.y + (t.clientY - startY) * dpr(),
+        );
+      }
+    };
+    const onEnd = (e: TouchEvent) => {
+      if (e.touches.length === 0) {
+        // A drag must not end in a synthesized click that selects whatever is underneath.
+        if (panning && e.cancelable) e.preventDefault();
+        mode = 'none';
+        panning = false;
+      } else if (e.touches.length === 1 && mode === 'pinch') {
+        // One finger lifted mid-pinch: carry on as a pan from where the other finger is.
+        mode = 'pan';
+        panning = true;
+        begin(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    };
+    canvas.addEventListener('touchstart', onStart, { passive: false });
+    canvas.addEventListener('touchmove', onMove, { passive: false });
+    canvas.addEventListener('touchend', onEnd, { passive: false });
+    canvas.addEventListener('touchcancel', onEnd, { passive: false });
+    return () => {
+      canvas.removeEventListener('touchstart', onStart);
+      canvas.removeEventListener('touchmove', onMove);
+      canvas.removeEventListener('touchend', onEnd);
+      canvas.removeEventListener('touchcancel', onEnd);
+    };
+  }, [officeState, panRef]);
+
   // Prevent default middle-click browser behavior (auto-scroll)
   const handleAuxClick = useCallback((e: React.MouseEvent) => {
     if (e.button === 1) e.preventDefault();
@@ -884,6 +986,7 @@ export function OfficeCanvas({
         onMouseLeave={handleMouseLeave}
         onContextMenu={handleContextMenu}
         className="block"
+        style={{ touchAction: 'none' }}
       />
     </div>
   );
