@@ -202,6 +202,8 @@ export interface Character {
   isActive: boolean;
   /** Assigned seat uid, or null if no seat */
   seatId: string | null;
+  /** Break-room seat an idle agent has claimed (its `assigned` flag is set), or null/undefined. */
+  loungeSeatId?: string | null;
   /** Active speech bubble type, or null if none showing */
   bubbleType: 'permission' | 'waiting' | null;
   /** Only meaningful while bubbleType === 'waiting': true when the agent went

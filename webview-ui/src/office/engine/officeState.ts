@@ -2,6 +2,7 @@ import { pickDiversePalette } from '../../../../core/src/paletteUtils.js';
 import {
   AUTO_ON_FACING_DEPTH,
   AUTO_ON_SIDE_DEPTH,
+  BREAK_AREA_LABEL,
   CHARACTER_HIT_HALF_WIDTH,
   CHARACTER_HIT_HEIGHT,
   CHARACTER_SITTING_OFFSET_PX,
@@ -171,6 +172,7 @@ export class OfficeState {
     for (const seat of this.seats.values()) {
       seat.assigned = false;
     }
+    for (const ch of this.characters.values()) ch.loungeSeatId = null; // claims died with the seats
 
     // First pass: try to keep characters at their existing seats
     for (const ch of this.characters.values()) {
@@ -274,12 +276,30 @@ export class OfficeState {
     return `${seat.seatCol},${seat.seatRow}`;
   }
 
+  /** Blocked-tile key of the break-room seat a character holds, or null */
+  private loungeSeatKey(ch: Character): string | null {
+    const seat = ch.loungeSeatId ? this.seats.get(ch.loungeSeatId) : undefined;
+    return seat ? `${seat.seatCol},${seat.seatRow}` : null;
+  }
+
+  /** Seats inside the break-room Area (BREAK_AREA_LABEL): where idle agents sit. */
+  getLoungeSeatIds(): string[] {
+    const out: string[] = [];
+    for (const uid of this.seats.keys()) {
+      if (this.seatZone(uid) === BREAK_AREA_LABEL) out.push(uid);
+    }
+    return out;
+  }
+
   /** Temporarily unblock a character's own seat, run fn, then re-block */
   private withOwnSeatUnblocked<T>(ch: Character, fn: () => T): T {
     const key = this.ownSeatKey(ch);
+    const loungeKey = this.loungeSeatKey(ch);
     if (key) this.blockedTiles.delete(key);
+    if (loungeKey) this.blockedTiles.delete(loungeKey);
     const result = fn();
     if (key) this.blockedTiles.add(key);
+    if (loungeKey) this.blockedTiles.add(loungeKey);
     return result;
   }
 
@@ -594,6 +614,11 @@ export class OfficeState {
     if (ch.seatId) {
       const seat = this.seats.get(ch.seatId);
       if (seat) seat.assigned = false;
+    }
+    if (ch.loungeSeatId) {
+      const seat = this.seats.get(ch.loungeSeatId);
+      if (seat) seat.assigned = false;
+      ch.loungeSeatId = null;
     }
     if (this.selectedAgentId === id) this.selectedAgentId = null;
     if (this.cameraFollowId === id) this.cameraFollowId = null;
@@ -1137,6 +1162,7 @@ export class OfficeState {
       this.greeter = null;
     }
 
+    const loungeSeatIds = this.getLoungeSeatIds();
     const toDelete: number[] = [];
     for (const ch of this.characters.values()) {
       const effect = advanceMatrixEffect(ch, dt);
@@ -1147,7 +1173,15 @@ export class OfficeState {
 
       // Temporarily unblock own seat so character can pathfind to it
       this.withOwnSeatUnblocked(ch, () =>
-        updateCharacter(ch, dt, this.walkableTiles, this.seats, this.tileMap, this.blockedTiles),
+        updateCharacter(
+          ch,
+          dt,
+          this.walkableTiles,
+          this.seats,
+          this.tileMap,
+          this.blockedTiles,
+          loungeSeatIds,
+        ),
       );
 
       // Tick bubble timer for waiting bubbles

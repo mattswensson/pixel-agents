@@ -89,6 +89,63 @@ export function createCharacter(
   };
 }
 
+/** Free the break-room seat a character holds, if any. */
+function releaseLounge(ch: Character, seats: Map<string, Seat>): void {
+  if (!ch.loungeSeatId) return;
+  const seat = seats.get(ch.loungeSeatId);
+  if (seat) seat.assigned = false;
+  ch.loungeSeatId = null;
+}
+
+function atLounge(ch: Character, seats: Map<string, Seat>): boolean {
+  const seat = ch.loungeSeatId ? seats.get(ch.loungeSeatId) : undefined;
+  return !!seat && ch.tileCol === seat.seatCol && ch.tileRow === seat.seatRow;
+}
+
+/**
+ * Idle agents head for the break room: claim a free lounge seat (or keep the one
+ * already held) and walk to it. Returns true when the character is now walking
+ * to, or sitting in, a lounge seat; false when there is none free (caller falls
+ * back to ordinary wandering).
+ */
+function goToLounge(
+  ch: Character,
+  seats: Map<string, Seat>,
+  loungeSeatIds: readonly string[],
+  tileMap: TileTypeVal[][],
+  blockedTiles: Set<string>,
+): boolean {
+  if (ch.isSubagent || loungeSeatIds.length === 0) return false;
+  let seat = ch.loungeSeatId ? seats.get(ch.loungeSeatId) : undefined;
+  if (!seat) {
+    const free = loungeSeatIds.filter((id) => seats.get(id) && !seats.get(id)!.assigned);
+    if (free.length === 0) return false;
+    const id = free[Math.floor(Math.random() * free.length)];
+    seat = seats.get(id)!;
+    seat.assigned = true;
+    ch.loungeSeatId = id;
+  }
+  // Seat tiles are blocked for everyone but their sitter; unblock just for this query.
+  const key = `${seat.seatCol},${seat.seatRow}`;
+  const wasBlocked = blockedTiles.delete(key);
+  const path = findPath(ch.tileCol, ch.tileRow, seat.seatCol, seat.seatRow, tileMap, blockedTiles);
+  if (wasBlocked) blockedTiles.add(key);
+  if (path.length > 0) {
+    ch.path = path;
+    ch.moveProgress = 0;
+    ch.state = CharacterState.WALK;
+  } else if (atLounge(ch, seats)) {
+    ch.state = CharacterState.TYPE; // sit down
+    ch.dir = seat.facingDir;
+  } else {
+    releaseLounge(ch, seats); // unreachable: give the seat back and wander instead
+    return false;
+  }
+  ch.frame = 0;
+  ch.frameTimer = 0;
+  return true;
+}
+
 export function updateCharacter(
   ch: Character,
   dt: number,
@@ -96,6 +153,7 @@ export function updateCharacter(
   seats: Map<string, Seat>,
   tileMap: TileTypeVal[][],
   blockedTiles: Set<string>,
+  loungeSeatIds: readonly string[] = [],
 ): void {
   ch.frameTimer += dt;
 
@@ -105,6 +163,17 @@ export function updateCharacter(
         ch.frameTimer -= TYPE_FRAME_DURATION_SEC;
         ch.frame = (ch.frame + 1) % 2;
       }
+      // Back to work while sitting in the break room: give the lounge seat back and
+      // let the IDLE branch walk to the desk.
+      if (ch.isActive && ch.loungeSeatId) {
+        releaseLounge(ch, seats);
+        ch.state = CharacterState.IDLE;
+        ch.frame = 0;
+        ch.frameTimer = 0;
+        break;
+      }
+      // Idle agents stay put in the break room until there is work again
+      if (!ch.isActive && atLounge(ch, seats)) break;
       // If no longer active, stand up and start wandering (after seatTimer expires)
       if (!ch.isActive) {
         if (ch.seatTimer > 0) {
@@ -128,6 +197,7 @@ export function updateCharacter(
       if (ch.seatTimer < 0) ch.seatTimer = 0; // clear turn-end sentinel
       // If became active, pathfind to seat
       if (ch.isActive) {
+        releaseLounge(ch, seats);
         if (!ch.seatId) {
           // No seat assigned — type in place
           ch.state = CharacterState.TYPE;
@@ -164,6 +234,11 @@ export function updateCharacter(
       // Countdown wander timer
       ch.wanderTimer -= dt;
       if (ch.wanderTimer <= 0) {
+        // Idle: head for a break-room seat when one is free
+        if (goToLounge(ch, seats, loungeSeatIds, tileMap, blockedTiles)) {
+          ch.wanderTimer = randomRange(WANDER_PAUSE_MIN_SEC, WANDER_PAUSE_MAX_SEC);
+          break;
+        }
         // Check if we've wandered enough — return to seat for a rest
         if (ch.wanderCount >= ch.wanderLimit && ch.seatId) {
           const seat = seats.get(ch.seatId);
@@ -236,6 +311,12 @@ export function updateCharacter(
               ch.state = CharacterState.IDLE;
             }
           }
+        } else if (atLounge(ch, seats)) {
+          // Arrived at the break-room seat: sit and stay until there is work again
+          const lounge = seats.get(ch.loungeSeatId!)!;
+          ch.state = CharacterState.TYPE;
+          ch.dir = lounge.facingDir;
+          ch.seatTimer = 0;
         } else {
           // Check if arrived at assigned seat — sit down for a rest before wandering again
           if (ch.seatId) {
@@ -291,6 +372,7 @@ export function updateCharacter(
       }
 
       // If became active while wandering, repath to seat
+      if (ch.isActive) releaseLounge(ch, seats);
       if (ch.isActive && ch.seatId) {
         const seat = seats.get(ch.seatId);
         if (seat) {

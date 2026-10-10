@@ -11,6 +11,9 @@ export const MAX_ROWS = 64;
 export const WALK_SPEED_PX_PER_SEC = 48;
 export const WALK_FRAME_DURATION_SEC = 0.15;
 export const TYPE_FRAME_DURATION_SEC = 0.3;
+/** Label of the Area whose seats are the break room: idle agents go there to sit, and
+ *  new agents are never seated there as their work seat (Areas prefer unzoned seats). */
+export const BREAK_AREA_LABEL = 'Break Room';
 export const WANDER_PAUSE_MIN_SEC = 2.0;
 export const WANDER_PAUSE_MAX_SEC = 20.0;
 export const WANDER_MOVES_BEFORE_REST_MIN = 3;
