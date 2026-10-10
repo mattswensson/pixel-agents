@@ -76,9 +76,9 @@ Most of this is still ahead. See [Issues](https://github.com/pixel-agents-hq/pix
 
 1. Install Pixel Agents from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=pablodelucca.pixel-agents) or [Open VSX](https://open-vsx.org/extension/pablodelucca/pixel-agents).
 2. Open the **Pixel Agents** panel beside the terminal.
-3. Click **+ Agent** to launch Claude Code. In a multi-root workspace, select the folder first.
+3. Click **+ Agent** to launch Claude Code. Hover **+ Agent** (long-press on a phone) to open its drawer and pick the directory to launch into — every workspace folder is listed there.
 
-To use Claude with `--dangerously-skip-permissions`, hover over **+ Agent** to find the **Skip permissions mode** button. Only use this when you accept the security implications.
+To use Claude with `--dangerously-skip-permissions`, turn on **Settings → Skip Permissions**. It stays on for every agent launched from that host until you turn it off. Only use this when you accept the security implications.
 
 Pixel Agents also detects Claude sessions started outside the extension. Turn on **Settings → Watch All Sessions** to include sessions from other workspaces.
 
@@ -103,12 +103,13 @@ Use a fixed address or port when needed:
 ```bash
 pixel-agents --port 3100
 pixel-agents --host 127.0.0.1 --port 3100
+pixel-agents --no-terminal
 pixel-agents --help
 ```
 
 The default bind address is `127.0.0.1`. Binding to `0.0.0.0` exposes the UI and WebSocket to the local network; do this only on a trusted network.
 
-Open the URL the CLI prints - it carries a `?token=` for this session. Any browser can watch the office without it, but installing or removing hooks (which edits your agent tool's own settings file, like the `~/.claude/settings.json`) is only offered to a session that has the token, so an untokened client on the network cannot approve it. Open the bare address instead and the hooks toggle in Settings is refused, and reports the actual install state rather than appearing to work.
+Open the URL the CLI prints - it carries a `?token=` for this server. Any browser can watch the office without it, but installing or removing hooks (which edits your agent tool's own settings file, like the `~/.claude/settings.json`), launching agents from the browser and attaching to their terminals are only offered to a session that has the token, so an untokened client on the network cannot approve or do any of it. Open the bare address instead and the hooks toggle in Settings is refused (reporting the actual install state rather than appearing to work) and the **+ Agent** button explains what it needs. Standalone keeps the same token across restarts (in `~/.pixel-agents/standalone-token`, readable only by you), so a bookmarked or home-screen URL keeps working.
 
 Treat that URL as a secret: the token is a bearer capability, not proof of being local. Whoever holds it can approve the hook install from anywhere the server is reachable — so don't paste the URL into a shared channel, and note that it also lands in your browser history and (unredacted) in the server's own request log.
 
