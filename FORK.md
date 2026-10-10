@@ -1,0 +1,39 @@
+# This fork (mattswensson/pixel-agents)
+
+The owner's customized Pixel Agents. It runs as the web office at
+https://tracker.confusedmatt.com, which shows the Claude Code sessions on this Mac. The owner asks
+for look-and-feel changes from their phone; sessions start from the "Pixel Agents" Remote Control
+server, each in its own git worktree.
+
+- **The fork is public** (GitHub forks of public repos can't be private). Never commit secrets, tokens,
+  personal data or anything from `~/.claude/` or `~/.cloudflared/`.
+- **Remotes:** `origin` = this fork, `upstream` = pixel-agents-hq/pixel-agents. Work on `main` of the
+  fork. To take upstream updates: `git fetch upstream && git merge upstream/main`, rebuild, test.
+- **Keep fork-only notes in this file**, not in `CLAUDE.md` (upstream's), so upstream merges stay
+  clean. The one line at the top of `CLAUDE.md` pointing here is the only fork change there.
+- **Build:** `npm ci && (cd webview-ui && npm ci) && npm run package` → `dist/cli.js`. Node 20+.
+  Build and run the tests (see `CLAUDE.md` → Testing) after each meaningful change.
+
+## Preview, then ship
+
+1. **Preview** from your worktree on port 8081, never 8080:
+   `node dist/cli.js --host 127.0.0.1 --port 8081` in a tmux session named `pixel-preview`.
+   The owner opens it at `https://mac.<tailnet>.ts.net:8443` (`tailscale serve --bg --https=8443
+http://127.0.0.1:8081`, Tailscale-only). Check `tailscale serve status` for the exact URL and
+   send it to the owner. Never put the preview on the Cloudflare tunnel.
+2. **Ship** only when the owner says so: merge to `main` and push, then in `~/code/pixel-agents`
+   `git pull && npm run package`, then restart the live server:
+   `tmux kill-session -t pixel-agents; tmux new-session -d -s pixel-agents -c "$HOME/code" "node $HOME/code/pixel-agents/dist/cli.js --host 127.0.0.1 --port 8080"`
+   and check `curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/` returns 200.
+   Stop the preview (`tmux kill-session -t pixel-preview`).
+
+## The live server
+
+- Bound to `127.0.0.1:8080` only. The Cloudflare tunnel routes tracker.confusedmatt.com there,
+  behind Cloudflare Access (owner's email only). Don't change the tunnel or Access policy.
+- The page includes the embedded Claude terminal (the owner accepted this). Don't widen access to it.
+- The startup URL's `?token=` is a secret (it approves hook installs). Never print it into a commit,
+  chat summary or file; the owner reads it with `tmux attach -t pixel-agents`.
+- Office layout, settings and seats live in `~/.pixel-agents/` (not in the repo). Custom sprites
+  (Settings → Add Asset Directory, format in `docs/external-assets.md`) can go in `assets-custom/`
+  in this repo so they are versioned.

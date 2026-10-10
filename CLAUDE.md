@@ -1,3 +1,5 @@
+> **This is mattswensson's fork. Read `FORK.md` first** for how it is built, previewed and deployed on this Mac.
+
 # Pixel Agents — Compressed Reference
 
 Pixel art office where AI agents (Claude Code terminals today, any tool tomorrow) become animated characters. Ships as a **VS Code extension** and an **`npx pixel-agents` standalone CLI** from the same source tree.
