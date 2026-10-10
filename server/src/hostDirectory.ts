@@ -33,15 +33,16 @@ export function directoryNameFromCwd(cwd: string | undefined): string | undefine
 
 const WORKTREE_HASH_MARKER = '--claude-worktrees-';
 
-/** The repo directory a worktree's Claude project folder belongs to, e.g.
- *  `-Users-me-code-pixel-agents--claude-worktrees-bridge-cse-01E7` -> pixel-agents.
- *  Claude flattens `/` (and `.`) to `-`, so the repo path is recovered by finding
- *  the split that exists on disk. Undefined for any other folder, or if the repo
- *  is gone. */
-export function directoryNameFromWorktreeHash(hash: string): string | undefined {
+/** The directory a Claude project folder name stands for, as its basename, e.g.
+ *  `-Users-me-code-pixel-agents` -> pixel-agents, and for a worktree
+ *  `-Users-me-code-pixel-agents--claude-worktrees-bridge-cse-01E7` -> pixel-agents too (the
+ *  repo that owns it). Claude flattens `/` (and `.`) to `-`, so the path is recovered by
+ *  finding the split that exists on disk. Undefined when nothing on disk matches. */
+export function directoryNameFromProjectHash(hash: string): string | undefined {
   const at = hash.indexOf(WORKTREE_HASH_MARKER);
-  if (at <= 0) return undefined;
-  const tokens = hash.slice(0, at).replace(/^-+/, '').split('-');
+  const repoPart = at > 0 ? hash.slice(0, at) : hash;
+  const tokens = repoPart.replace(/^-+/, '').split('-').filter(Boolean);
+  if (tokens.length === 0) return undefined;
   const walk = (base: string, i: number): string | undefined => {
     if (i === tokens.length) return base;
     for (let j = tokens.length; j > i; j--) {
@@ -53,8 +54,8 @@ export function directoryNameFromWorktreeHash(hash: string): string | undefined 
     }
     return undefined;
   };
-  const repo = walk(path.sep, 0);
-  return repo ? directoryNameFor(repo) : undefined;
+  const dir = walk(path.sep, 0);
+  return dir ? directoryNameFor(dir) : undefined;
 }
 
 /** The directory the standalone server was started from. */

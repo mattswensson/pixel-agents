@@ -44,7 +44,7 @@ import {
 } from './constants.js';
 import { seedContextUsage } from './contextUsage.js';
 import type { DismissalTracker } from './dismissalTracker.js';
-import { directoryNameFromCwd, directoryNameFromWorktreeHash } from './hostDirectory.js';
+import { directoryNameFromCwd, directoryNameFromProjectHash } from './hostDirectory.js';
 import { assignPaletteIfNeeded } from './paletteAssigner.js';
 import { pathsMatch } from './pathKey.js';
 import type { SubagentWatch } from './subagentWatch.js';
@@ -1392,8 +1392,8 @@ export function scanExternalDir(
 
 /** Derive a readable Directory name from the Claude project dir hash. */
 function directoryNameFromProjectDir(dirName: string): string {
-  const worktreeRepo = directoryNameFromWorktreeHash(dirName);
-  if (worktreeRepo) return worktreeRepo;
+  const decoded = directoryNameFromProjectHash(dirName);
+  if (decoded) return decoded;
   const parts = dirName.replace(/^-+/, '').split('-');
   return parts[parts.length - 1] || dirName;
 }
