@@ -143,6 +143,11 @@ test('removing a sitting agent frees its lounge seat', () => {
 
 // ── Arcade play ──────────────────────────────────────────────────────────────
 
+/** An idle agent reaches a cabinet within ~25 s (wander delay <= 20 s plus the walk) and then
+ *  plays for at least ARCADE_PLAY_MIN_SEC (40 s), so at 30 s it is always mid-game. Checking
+ *  later races the end of a short game, after which it (by design) moves on. */
+const ARCADE_CHECK_SEC = 30;
+
 /** Spots are derived from catalog furniture; unit tests have no catalog, so stub them. */
 function withArcade(os: OfficeState, spots: Array<[number, number]>): void {
   const list = spots.map(([col, row]) => ({ key: `${col},${row}`, col, row }));
@@ -162,7 +167,7 @@ test('an idle agent walks to a free cabinet, stands facing it, and plays', () =>
   os.addAgent(1, undefined, undefined, 'desk-a', true);
   os.setAgentActive(1, false);
   const ch = os.getCharacters().find((c) => c.id === 1)!;
-  run(os, 60);
+  run(os, ARCADE_CHECK_SEC);
   assert.deepEqual([ch.tileCol, ch.tileRow], [6, 2], 'standing at the cabinet');
   assert.equal(ch.state, CharacterState.IDLE);
   assert.equal(ch.dir, Direction.UP, 'facing the machine');
@@ -175,7 +180,7 @@ test('two agents never share a cabinet', () => {
     os.addAgent(id, undefined, undefined, undefined, true);
     os.setAgentActive(id, false);
   }
-  run(os, 60);
+  run(os, ARCADE_CHECK_SEC);
   const players = os.getCharacters().filter((c) => c.playSpotKey);
   assert.equal(players.length, 1, 'one player, the other waits');
 });
@@ -185,7 +190,7 @@ test('work interrupts a game: the agent goes back to its desk and frees the cabi
   os.addAgent(1, undefined, undefined, 'desk-a', true);
   os.setAgentActive(1, false);
   const ch = os.getCharacters().find((c) => c.id === 1)!;
-  run(os, 60);
+  run(os, ARCADE_CHECK_SEC);
   assert.equal(ch.playSpotKey, '6,2');
   os.setAgentActive(1, true);
   run(os, 60);
@@ -195,7 +200,7 @@ test('work interrupts a game: the agent goes back to its desk and frees the cabi
   // ...and another agent can now use it
   os.addAgent(2, undefined, undefined, undefined, true);
   os.setAgentActive(2, false);
-  run(os, 60);
+  run(os, ARCADE_CHECK_SEC);
   assert.equal(os.getCharacters().find((c) => c.id === 2)!.playSpotKey, '6,2');
 });
 
@@ -221,10 +226,10 @@ test('removing a playing agent frees its cabinet', () => {
   const os = arcadeOnlyOffice([[6, 2]]);
   os.addAgent(1, undefined, undefined, undefined, true);
   os.setAgentActive(1, false);
-  run(os, 60);
+  run(os, ARCADE_CHECK_SEC);
   os.removeAgent(1);
   os.addAgent(2, undefined, undefined, undefined, true);
   os.setAgentActive(2, false);
-  run(os, 60);
+  run(os, ARCADE_CHECK_SEC);
   assert.equal(os.getCharacters().find((c) => c.id === 2)?.playSpotKey, '6,2');
 });

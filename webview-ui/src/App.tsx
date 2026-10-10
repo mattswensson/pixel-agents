@@ -791,14 +791,11 @@ function App() {
             <TerminalDrawer
               agentIds={terminalAgentIds}
               shownAgentId={terminalDrawer.shownAgentId}
-              onSelectAgent={terminalDrawer.select}
-              onCloseAgent={handleCloseAgent}
+              activeLacksTerminal={terminalDrawer.activeLacksTerminal}
               isOpen={terminalDrawer.isOpen}
               onClosePanel={terminalDrawer.close}
               widthPx={terminalDrawer.widthPx}
               onResizeStart={terminalDrawer.onResizeStart}
-              getAppearance={terminalDrawer.getAppearance}
-              statusFor={terminalDrawer.statusFor}
               onStatusChange={terminalDrawer.onStatusChange}
             />
           )}

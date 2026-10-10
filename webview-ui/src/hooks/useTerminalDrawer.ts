@@ -31,6 +31,9 @@ export interface TerminalDrawerController {
    *  clicked). null only when there are no terminals. Both shells and the
    *  mobile key bar read this one resolution. */
   shownAgentId: number | null;
+  /** The selected agent has no PTY (a session started outside this app), so the
+   *  pane showing is some other agent's — the drawer must say so, not pass it off. */
+  activeLacksTerminal: boolean;
   isOpen: boolean;
   widthPx: number;
   /** The newest terminal the drawer saw appear (launch answered, or a reload
@@ -78,6 +81,8 @@ export function useTerminalDrawer({
     activeAgentId !== null && terminalAgentIds.includes(activeAgentId)
       ? activeAgentId
       : (terminalAgentIds[0] ?? null);
+
+  const activeLacksTerminal = activeAgentId !== null && !terminalAgentIds.includes(activeAgentId);
 
   // Reveal a newly-opened terminal. Launching is async — the toolbar sends
   // launchAgent and the server answers with terminalSessionOpened once the PTY
@@ -187,6 +192,7 @@ export function useTerminalDrawer({
     activeAgentId,
     shownAgentId,
     lastOpened,
+    activeLacksTerminal,
     isOpen,
     widthPx,
     reveal,

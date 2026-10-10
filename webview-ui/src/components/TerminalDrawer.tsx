@@ -2,8 +2,6 @@ import type { MouseEvent as ReactMouseEvent } from 'react';
 
 import { TERMINAL_DRAWER_RESIZE_HANDLE_PX } from '../constants.js';
 import type { TerminalConnectionStatus } from '../terminal/terminalClient.js';
-import type { AgentAppearance, TabStatus } from './AgentCard.js';
-import { AgentCardBar } from './AgentCardBar.js';
 import { TerminalPaneStack } from './TerminalPaneStack.js';
 import { Button } from './ui/Button.js';
 
@@ -12,8 +10,8 @@ interface TerminalDrawerProps {
   agentIds: number[];
   /** The pane showing (useTerminalDrawer's resolution); its card is the active tab. */
   shownAgentId: number | null;
-  onSelectAgent: (agentId: number) => void;
-  onCloseAgent: (agentId: number) => void;
+  /** The selected agent has no terminal here: cover the pane with a note. */
+  activeLacksTerminal: boolean;
   isOpen: boolean;
   /** Close the panel (the ">" in its top-right corner). Reopening happens in App:
    *  selecting an agent — by card or by character — shows its terminal. */
@@ -22,10 +20,6 @@ interface TerminalDrawerProps {
   widthPx: number;
   /** Mousedown on the left-edge drag handle; App owns the resize gesture. */
   onResizeStart: (e: ReactMouseEvent) => void;
-  /** Look up an agent's character appearance for its tab mug shot. */
-  getAppearance: (agentId: number) => AgentAppearance;
-  /** An agent's tab status dot (null until first activity). */
-  statusFor: (agentId: number) => TabStatus | null;
   onStatusChange: (agentId: number, status: TerminalConnectionStatus) => void;
 }
 
@@ -36,40 +30,22 @@ interface TerminalDrawerProps {
  * only ever reports over the WebSocket transport. VS Code keeps using its own
  * terminal panel.
  *
- * The agent-card bar (AgentCardBar, shared with VS Code) is drawn on top of
- * the office space at its right edge at all times; the terminal panel opens to
- * the bar's right. Here the cards double as tabs — clicking one selects that
- * agent's pane — so the panel itself is pure terminal with no chrome of its own
- * beyond the resize handle and a floating close button.
+ * The agents are chosen from the left-hand AgentListPanel; this panel is pure terminal.
  */
 export function TerminalDrawer({
   agentIds,
   shownAgentId,
-  onSelectAgent,
-  onCloseAgent,
+  activeLacksTerminal,
   isOpen,
   onClosePanel,
   widthPx,
   onResizeStart,
-  getAppearance,
-  statusFor,
   onStatusChange,
 }: TerminalDrawerProps) {
   if (agentIds.length === 0) return null;
 
   return (
     <div className="h-full shrink-0 flex">
-      {/* The cards are the panel's tabs — clicking one selects that agent's
-          pane (App also reopens the panel if it's closed). */}
-      <AgentCardBar
-        agentIds={agentIds}
-        activeAgentId={shownAgentId}
-        getAppearance={getAppearance}
-        statusFor={statusFor}
-        onSelect={onSelectAgent}
-        onClose={onCloseAgent}
-      />
-
       {/* Terminal panel — opens to the right of the card bar. display:none
           (not unmount) while closed: the panes stay mounted so xterm buffers
           and sockets survive; unmounting would drop the scrollback and force a
@@ -110,6 +86,14 @@ export function TerminalDrawer({
             onStatusChange={onStatusChange}
             paneClassName="inset-4"
           />
+          {activeLacksTerminal && (
+            <div
+              data-testid="no-terminal-note"
+              className="absolute inset-4 z-40 flex items-center justify-center bg-bg text-center text-text-muted"
+            >
+              This agent was started outside Pixel Agents, so it has no terminal here.
+            </div>
+          )}
         </div>
       </div>
     </div>
