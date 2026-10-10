@@ -1005,4 +1005,27 @@ function pingPong() {
 }
 simple('PING_PONG_TABLE', 'Ping-Pong Table', 'misc', pingPong());
 
+// ── POOL TABLE (48x32, floor item, 3x2 tiles) ────────────────
+function poolTable() {
+  const c = new C(48, 32);
+  c.rect(5, 27, 3, 4, K.wood);
+  c.rect(40, 27, 3, 4, K.wood);
+  c.rect(2, 30, 44, 1, K.ink);
+  c.rect(1, 5, 46, 23, K.ink);
+  c.rect(2, 6, 44, 21, K.wood); // rails
+  c.rect(2, 6, 44, 1, K.woodL);
+  c.rect(5, 9, 38, 15, '#1d7a46'); // felt
+  c.rect(6, 10, 36, 13, K.green);
+  // pockets
+  [[5, 9], [23, 8], [42, 9], [5, 23], [23, 24], [42, 23]].forEach(([x, y]) => c.ellipse(x, y, 2, 2, K.ink));
+  // rack of balls, a cue ball and a cue
+  [[32, 16, K.yellow], [34, 15, K.red], [34, 17, K.blue], [36, 14, K.orange], [36, 16, K.ink], [36, 18, K.purpleL]].forEach(
+    ([x, y, k]) => c.rect(x, y, 2, 2, k),
+  );
+  c.rect(14, 16, 2, 2, K.white);
+  c.line(7, 20, 12, 17, K.woodL);
+  return c;
+}
+simple('POOL_TABLE', 'Pool Table', 'misc', poolTable());
+
 console.log('Generated custom furniture into', OUT_DIR);
