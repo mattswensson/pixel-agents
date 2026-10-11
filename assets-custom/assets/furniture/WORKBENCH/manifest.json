@@ -1,0 +1,14 @@
+{
+  "id": "WORKBENCH",
+  "name": "Workbench",
+  "category": "misc",
+  "type": "asset",
+  "file": "WORKBENCH.png",
+  "width": 48,
+  "height": 32,
+  "footprintW": 3,
+  "footprintH": 2,
+  "canPlaceOnWalls": false,
+  "canPlaceOnSurfaces": false,
+  "backgroundTiles": 0
+}

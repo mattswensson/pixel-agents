@@ -1028,4 +1028,74 @@ function poolTable() {
 }
 simple('POOL_TABLE', 'Pool Table', 'misc', poolTable());
 
+// ── CNC ROUTER (48x32, floor item, 3x2 tiles) ────────────────
+function cncRouter() {
+  const c = new C(48, 32);
+  c.rect(3, 27, 3, 4, K.gray);
+  c.rect(42, 27, 3, 4, K.gray);
+  c.rect(1, 30, 46, 1, K.ink);
+  c.rect(1, 12, 46, 16, K.ink); // frame
+  c.rect(2, 13, 44, 14, K.dark);
+  c.rect(4, 15, 40, 10, K.woodL); // wood sheet on the bed
+  c.rect(4, 15, 40, 1, K.cork);
+  for (let x = 8; x < 44; x += 8) c.rect(x, 16, 1, 8, K.cork); // t-slots
+  c.rect(8, 7, 3, 21, K.orange); // gantry rails
+  c.rect(37, 7, 3, 21, K.orange);
+  c.rect(8, 7, 32, 5, K.orange); // gantry beam
+  c.rect(8, 7, 32, 1, K.orangeL);
+  c.rect(8, 11, 32, 1, K.orangeD);
+  c.rect(22, 11, 6, 7, K.mid); // spindle carriage
+  c.rect(24, 17, 2, 4, K.light);
+  c.px(25, 21, K.yellow); // bit
+  c.rect(40, 4, 6, 4, K.dark); // e-stop box
+  c.px(43, 5, K.red);
+  c.px(44, 5, K.red);
+  return c;
+}
+simple('CNC_ROUTER', 'CNC Router', 'electronics', cncRouter());
+
+// ── WORKBENCH (48x32, floor item, 3x2 tiles) ─────────────────
+function workbench() {
+  const c = new C(48, 32);
+  c.rect(3, 22, 3, 9, K.wood);
+  c.rect(42, 22, 3, 9, K.wood);
+  c.rect(1, 30, 46, 1, K.ink);
+  c.rect(5, 26, 38, 2, K.corkD); // lower shelf
+  c.rect(1, 10, 46, 13, K.ink);
+  c.rect(2, 11, 44, 11, K.woodL); // top
+  c.rect(2, 11, 44, 2, '#e0b078');
+  c.rect(2, 20, 44, 2, K.wood);
+  c.rect(5, 6, 8, 5, K.gray); // vise
+  c.rect(5, 6, 8, 1, K.light);
+  c.rect(13, 8, 4, 1, K.mid);
+  c.rect(15, 6, 1, 5, K.mid);
+  c.rect(22, 14, 7, 3, K.mid); // clamp + wrench
+  c.rect(22, 14, 7, 1, K.light);
+  c.line(32, 16, 40, 13, K.red);
+  c.rect(39, 12, 2, 2, K.red);
+  c.rect(34, 17, 8, 2, K.dark); // box of screws
+  c.px(36, 17, K.yellow);
+  c.px(39, 17, K.mid);
+  return c;
+}
+simple('WORKBENCH', 'Workbench', 'misc', workbench());
+
+// ── TOOL CHEST (16x32, floor item, 1x2 tiles) ────────────────
+function toolChest() {
+  const c = new C(16, 32);
+  c.rect(1, 30, 14, 1, K.ink);
+  c.rect(2, 28, 2, 3, K.dark);
+  c.rect(12, 28, 2, 3, K.dark);
+  c.rect(1, 6, 14, 22, K.ink);
+  c.rect(2, 7, 12, 20, K.red);
+  c.rect(1, 4, 14, 3, K.dark); // lid
+  c.rect(2, 4, 12, 1, K.gray);
+  for (let y = 9; y < 26; y += 5) {
+    c.rect(3, y, 10, 4, '#b8283c');
+    c.rect(6, y + 1, 4, 1, K.light); // handle
+  }
+  return c;
+}
+simple('TOOL_CHEST', 'Tool Chest', 'storage', toolChest());
+
 console.log('Generated custom furniture into', OUT_DIR);

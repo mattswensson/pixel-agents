@@ -1,0 +1,14 @@
+{
+  "id": "CNC_ROUTER",
+  "name": "CNC Router",
+  "category": "electronics",
+  "type": "asset",
+  "file": "CNC_ROUTER.png",
+  "width": 48,
+  "height": 32,
+  "footprintW": 3,
+  "footprintH": 2,
+  "canPlaceOnWalls": false,
+  "canPlaceOnSurfaces": false,
+  "backgroundTiles": 0
+}

@@ -1,0 +1,14 @@
+{
+  "id": "TOOL_CHEST",
+  "name": "Tool Chest",
+  "category": "storage",
+  "type": "asset",
+  "file": "TOOL_CHEST.png",
+  "width": 16,
+  "height": 32,
+  "footprintW": 1,
+  "footprintH": 2,
+  "canPlaceOnWalls": false,
+  "canPlaceOnSurfaces": false,
+  "backgroundTiles": 0
+}
